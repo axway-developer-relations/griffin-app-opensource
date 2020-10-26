@@ -1,0 +1,279 @@
+<alloy>
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );
+		const { observe, unobserve, raw } = require( '@titanium/observer' );	
+		const dateFormat = 'YYYYDDD';		
+	</script>
+
+	<script>
+
+
+		let calendar_widget;
+
+		const addSchedule = async () => {
+			logger.track( `📌  You are here → ${screen_name}.addSchedule()` );
+
+			if ( !turbo.app.data.current_office || !turbo.app.data.current_user ) {
+				return;
+			}
+
+			turbo.openLoadingScreen();
+
+			turbo.tracker.schedule_update();
+
+			for ( const date of calendar_widget.getAddedDates() ) {
+
+				await turbo.api.schedules.add( {
+					office_id: turbo.app.data.current_user.office_id,
+					employee_id: turbo.app.data.current_user.id,
+					day: date,
+				} )
+					.catch( error => {
+						console.error(error);
+						logger.error(error);
+					} );
+			}
+
+			for ( const date of calendar_widget.getRemovedDates() ) {
+
+				const selected_schedule = _.find( turbo.app.data.schedules, { day: date,  office_id: turbo.app.data.current_user.office_id } );
+				if ( selected_schedule ) {
+					await turbo.api.schedules.delete( selected_schedule.id )
+						.catch( error => {
+							console.error(error);
+							logger.error(error);
+							turbo.tracker.error(error);
+						} );
+				} else {
+					logger.error( `🛑  error: Schedule ID not found for day: ${date}` );
+					turbo.tracker.error(error);
+				}
+
+			}
+
+			// await turbo.api.schedules.query({ force: true });
+			await turbo.api.schedules.getMine({ force: true });
+			await turbo.api.reports.query({ force: true });
+
+			turbo.closeLoadingScreen();
+
+			alert( 'Schedule Updated' );
+
+		}
+
+		let observer;
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+			observer = observe( () => {
+				logger.track( `👀  you are here → schedule-update.observe()` );
+				try {
+					if ( turbo.app.data.current_office ) {
+						logger.track( '📌  you are here → turbo.app.data.current_office exists.' );
+					}
+					if ( turbo.app.data.current_reports ) {
+						logger.silly( `🦠  turbo.app.data.current_reports.length: ${turbo.app.data.current_reports.length}` );
+					}
+
+					$.office_name.text = _.get( turbo, 'app.data.current_office.name', 'No Office Selected' );
+					loadCalendar();
+
+				} catch ( error ) {
+					console.error(error);
+					logger.error(error);
+					turbo.tracker.error(error);
+				}
+
+			} );
+
+			$.on( 'close', () => {
+				logger.track( `📌  you are here → ${screen_name}.onClose()` );
+				unobserve( observer );
+			} );
+
+		}
+
+		const closeWindow = async e => { $.window.close(); }
+
+	</script>
+
+	<window id="window" title="Edit Schedule" layout="absolute" onOpen="onOpen" onBack="closeWindow">
+
+		<action-bar platform="android" displayHomeAsUp="true" onHomeIconItemSelected="closeWindow" />
+
+		<scroll-view top="0">
+
+			<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="10">
+
+				<label text="We're glad to have you back!"
+						 width="fill"
+						 left="20"
+						 top="10"
+						 textAlign="left"
+						 fontSize="20"
+						 fontFamily="SFProDisplay-Medium"
+						 height="size" />
+
+				<view class="line1" />
+
+				<label width="turbo.WIDTH_85"
+						 top="10"
+						 textAlign="left"
+						 fontSize="16"
+						 fontFamily="SFProDisplay-Light"
+						 text="To plan your time back at the office safely, select the dates you plan to come in. Thanks for helping keep Axway safe!">
+
+				</label>
+
+				<vertical height="turbo.HEIGHT_2" />
+
+			</vertical>
+
+			<absolute width="turbo.WIDTH_95" backgroundColor="white" top="25" height="50">
+
+				<label id="office_name"
+						 width="size"
+						 left="20"
+						 textAlign="left"
+						 fontSize="20"
+						 fontFamily="SFProDisplay-Medium"
+						 verticalAlign="center"
+						 height="size" />
+
+				<label text="Change"
+						 color="turbo.colors.primary_active"
+						 backgroundColor="turbo.colors.primary"
+						 width="80"
+						 height="30"
+						 right="15"
+						 textAlign="center"
+						 fontSize="15"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="turbo.openTabWindowHandler('offices-select')" />
+
+			</absolute>
+
+			<absolute top="15">
+
+				<label id="cancel"
+						 visible="false"
+						 text="Cancel"
+						 backgroundColor="turbo.colors.primary_active"
+						 color="turbo.colors.primary"
+						 borderColor="turbo.colors.primary"
+						 borderWidth="3"
+						 width="turbo.WIDTH_35"
+						 height="45"
+						 left="15"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="closeWindow" />
+
+				<label text="Save Schedule"
+						 color="turbo.colors.primary_active"
+						 backgroundColor="turbo.colors.primary"
+						 width="turbo.WIDTH_50"
+						 height="45"
+						 right="15"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="addSchedule" />
+
+			</absolute>
+
+			<vertical id="calendar_container" width="fill" />
+
+			<absolute height="turbo.HEIGHT_20" />
+
+		</scroll-view>
+
+	</window>
+
+	<script>
+
+		_.extend( $, $.__views );
+
+		const loadCalendar = async e => {
+
+			const changesMade = () => {
+				$.cancel.visible = true;
+			}
+
+			turbo.app.data.schedules = await turbo.api.schedules.getMine();
+
+				// logger.verbose(`🦠  turbo.app.data.schedules: ${JSON.stringify(turbo.app.data.schedules, null, 2)}`);
+
+			const my_schedules = _.filter( turbo.app.data.schedules, schedule => {
+
+				return ( schedule.day >= moment().format( dateFormat ) && ( schedule.office_id === turbo.app.data.current_user.office_id ) )
+
+			});
+
+			$.my_dates = _.map( my_schedules, 'day' );
+			$.startDate = moment().format( dateFormat );
+			$.endDate = moment().add( 6, 'month' ).format( dateFormat );
+
+			let selected_day = _.toInteger( moment().format( dateFormat ) );
+			let selected_report = turbo.app.data.current_reports[ 0 ] || {};
+
+			$.blocked_dates = _.map( _.filter( turbo.app.data.current_reports, report => {
+
+				return ( report.day >= moment().format( dateFormat ) && ( report.office_id === turbo.app.data.current_user.office_id ) && ( report.int_capacity >= 100 ) );
+
+			} ), report => {
+				return _.toInteger( parseInt( report.day ) );
+			} );
+
+			if ( calendar_widget ) {
+				calendar_widget.off( 'changed', changesMade );
+				Alloy.cleanUpController( calendar_widget );
+
+				$.calendar_container.removeAllChildren();
+			}
+
+			logger.debug( `🦠  $.blocked_dates: ${JSON.stringify( $.blocked_dates, null, 2 )}` );
+
+			calendar_widget = Alloy.createController( '@titanium/calendar-picker', {
+				id: "calendar",
+				dateFormat: dateFormat,
+				startDate: $.startDate,
+				endDate: $.endDate,
+				selectedDates: $.my_dates,
+				top: 20,
+				blockedDates: $.blocked_dates,
+				backgroundColor: turbo.colors.surface,
+
+				inactiveBackgroundColor: turbo.colors.background,
+				inactiveTextColor: turbo.colors.background_disabled,
+
+
+				blockedBackgroundColor: turbo.colors.danger,
+				// blockedTextColor: 'white',
+
+				unselectedBorderColor: turbo.colors.surface_active,
+				unselectedBackgroundColor: turbo.colors.surface,
+				unselectedTextColor: turbo.colors.surface_active,
+
+				selectedBackgroundColor: turbo.colors.success,
+				selectedBorderColor: turbo.colors.text,
+				selectedTextColor: turbo.colors.success_active,
+
+				todayBorderColor: turbo.colors.warning,
+				headerBackgroundColor: turbo.colors.surface,
+			} );
+
+			$.calendar_container.add( calendar_widget.getView() );
+
+			$.cancel.visible = false;
+
+			calendar_widget.on( 'changed', changesMade );
+		}
+
+		loadCalendar();
+
+	</script>
+
+</alloy>

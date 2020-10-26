@@ -1,0 +1,413 @@
+<alloy>
+
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );
+		const { observe, unobserve, raw } = require( '@titanium/observer' );	
+		const DEMO = false;		
+	</script>
+
+	<script>
+
+		logger.silly( `🦠  inside office-scheduler: Alloy.Collections.current_reports.length: ${JSON.stringify( Alloy.Collections.current_reports )}` );
+
+		const showAdminOffice = DEMO ? false : turbo.hasClaims( [ 'offices:admin', 'capacities:admin' ] );
+		logger.debug( `🦠  showAdminOffice: ${JSON.stringify( showAdminOffice, null, 2 )}` );
+
+		const filter_reports = collection => {
+			const filtered = collection.filter( model => {
+				const item = model.toJSON();
+				return moment( item.day, 'YYYYDDDD' ).isBefore( moment().add( 30, 'days' ) );
+			} );
+
+			return filtered;
+		}
+		const onRefresh = async e => {
+			logger.track( '📌  you are here → ${screen_name}.onRefresh()' );
+			await turbo.api.offices.query( { force: true } );
+			await turbo.api.reports.query();
+			$.refresh.endRefreshing();
+		}
+
+		const transform_reports = model => {
+			const transform = model.toJSON();
+
+			if( DEMO ){
+				// For demo screenshots
+				transform.percent_capacity = Math.floor( Math.random() * 100 ) + '%';
+			}
+
+			transform.day_formatted = moment( transform.day, 'YYYYDDDD' ).format( 'ddd M/D' );
+			transform.limit_formatted = transform.limit || '0';
+			transform.percent_capacity_formatted = transform.percent_capacity || 0;
+
+			const full = Math.floor( turbo.WIDTH_40 );
+
+			if ( transform.percent_capacity === 'Closed' || transform.percent_capacity === 'N/A' ) {
+				transform.percent_capacity_width = full;
+				transform.percent_capacity_color = turbo.colors.primary;
+			} else {
+
+				transform.percent_capacity = parseInt( transform.percent_capacity );
+				transform.percent_capacity_width = _.clamp( Math.round( full * ( transform.percent_capacity / 100 ) ), 0, full );
+			}
+
+			transform.graph_color = ( transform.percent_capacity_width === full ) ? turbo.colors.danger : turbo.colors.info;
+
+			return transform;
+
+		}
+
+		const check_in = async e => {
+
+			turbo.openLoadingScreen();
+			turbo.collapseContainer( $.check_in_button_container );
+
+			const body = {
+				office_id: turbo.app.data.current_user.office_id,
+				employee_id: turbo.app.data.current_user.id,
+			};
+
+			// logger.debug(`🦠  body: ${JSON.stringify(body, null, 2)}`);
+
+			await turbo.api.checkins.add( {
+				office_id: turbo.app.data.current_user.office_id,
+				employee_id: turbo.app.data.current_user.id,
+			} );
+
+
+
+			alert( 'Thank you for checking in!' );
+			turbo.closeLoadingScreen();
+
+
+		}
+
+		let observer;
+		let office_observer;
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+
+			turbo.tracker.screen_view( screen_name );
+
+			office_observer = observe( async () => {
+				logger.track( `👀  you are here → ${screen_name}.office_observer()` );
+				try {
+					if ( turbo.app.data.current_office ) {
+						logger.debug( `🦠  turbo.app.data.current_office.name: ${turbo.app.data.current_office.name}` );
+						logger.debug( `🦠  turbo.app.data.current_office.allow_checkins: ${turbo.app.data.current_office.allow_checkins}` );
+
+						if ( turbo.app.data.current_office.allow_checkins ) {
+							$.check_in_button.text = `Check-in for ${turbo.app.data.current_office.name}`;
+							turbo.expandContainer( $.check_in_button_container );
+						} else {
+							turbo.collapseContainer( $.check_in_button_container );
+						}
+
+					}
+
+				} catch ( error ) {
+					logger.error( '🛑  Error observing: turbo.app.data.current_office', error );
+					turbo.tracker.error( error );
+				}
+			} );
+
+			observer = observe( () => {
+				logger.track( `👀  you are here → ${screen_name}.observe()` );
+				try {
+					if ( turbo.app.data.current_reports ) {
+						logger.silly( `🦠  turbo.app.data.current_reports.length: ${turbo.app.data.current_reports.length}` );
+					}
+					$.num_scheduled.text = _.get( turbo, 'app.data.current_reports[0].num_scheduled', '0' );
+					$.limit.text = _.get( turbo, 'app.data.current_reports[0].limit', '0' );
+					$.percent_capacity.text = _.trim( _.get( turbo, 'app.data.current_reports[0].percent_capacity', '0%' ) );
+					$.max_capacity.text = _.get( turbo, 'app.data.current_reports[0].max_capacity', '0' );
+					$.office_name.text = _.get( turbo, 'app.data.current_reports[0].office_name', 'No Office Selected' );
+
+					if ( DEMO ) {
+						$.num_scheduled.text = 75
+						$.limit.text = 88;
+						$.percent_capacity.text = '85%';
+						$.max_capacity.text = 350;
+						$.office_name.text = 'Phoenix';
+					}
+
+					Alloy.Collections.current_reports.trigger( 'fetch' );
+					logger.debug( `🦠  Alloy.Collections.current_reports.length: ${JSON.stringify( Alloy.Collections.current_reports.length, null, 2 )}` );
+
+
+				} catch ( error ) {
+					logger.error( '🛑  Error observing: turbo.app.data.current_reports', error );
+					turbo.tracker.error( error );
+				}
+
+			} );
+
+			turbo.closeLoadingScreen();
+
+			$.on( 'close', () => {
+				logger.track( `📌  you are here → ${screen_name}.onClose()` );
+				unobserve( observer );
+			} );
+		}
+
+	</script>
+
+	<window title="turbo.app_display_name" onOpen="onOpen">
+		<scroll-view>
+			<refresh-control id="refresh" onRefreshstart="onRefresh" />
+
+			<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20">
+
+				<absolute top="15">
+
+					<label id="office_name"
+							 width="fill"
+							 left="20"
+							 textAlign="left"
+							 verticalAlign="center"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Heavy" />
+
+
+					<label text="Change"
+							 color="turbo.colors.primary_active"
+							 backgroundColor="turbo.colors.primary"
+							 width="80"
+							 height="30"
+							 right="15"
+							 textAlign="center"
+							 fontSize="15"
+							 fontFamily="SFProDisplay-Bold"
+							 onClick="turbo.openTabWindowHandler('offices-select')" />
+
+				</absolute>
+
+				<view class="line1" />
+
+				<horizontal top="15">
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+						<label text="Currently\nScheduled"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+						<label id="num_scheduled"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+
+						<label text="In-Office\nLimit"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+						<label id="limit"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+
+						<label text="Current\nCapacity"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+						<label id="percent_capacity"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 color="turbo.colors.danger"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+
+						<label text="Max\nCapacity"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+
+						<label id="max_capacity"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+				</horizontal>
+
+				<absolute height="20" />
+
+			</vertical>
+
+			<absolute width="fill" height="50" top="15" if="showAdminOffice">
+
+				<label text="Administer this Office"
+						 color="turbo.colors.secondary_active"
+						 backgroundColor="turbo.colors.secondary"
+						 width="turbo.WIDTH_55"
+						 height="45"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="turbo.openTabWindowHandler('office-edit')"
+						 if="showAdminOffice" />
+
+			</absolute>
+
+			<absolute width="fill" height="50" top="15">
+
+				<label text="Edit your Schedule"
+						 color="turbo.colors.primary_active"
+						 backgroundColor="turbo.colors.primary"
+						 width="turbo.WIDTH_55"
+						 height="45"
+						 _top="25"
+						 _left="turbo.WIDTH_4"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="turbo.openTabWindowHandler('schedule-update')" />
+
+			</absolute>
+
+			<absolute id="check_in_button_container" width="fill" height="50" top="15" collapseMargins="true" visibility="collapse">
+
+				<label id="check_in_button"
+						 color="turbo.colors.primary_active"
+						 backgroundColor="turbo.colors.primary"
+						 width="turbo.WIDTH_85"
+						 height="45"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="check_in" />
+
+			</absolute>
+
+			<vertical id="upcoming-7-day-schedule" width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20" height="size">
+
+				<label text="Upcoming utilization and attendees"
+						 width="fill"
+						 left="20"
+						 top="10"
+						 textAlign="left"
+						 fontSize="19"
+						 fontFamily="SFProDisplay-bold"
+						 height="size" />
+
+				<view class="line1" />
+
+				<label height="size"
+						 width="turbo.WIDTH_85"
+						 top="10"
+						 textAlign="left"
+						 fontSize="16"
+						 color="turbo.colors.surface_active"
+						 fontFamily="SFProDisplay-Light"
+						 text="Want to see who is scheduled to come into the office? Click one of the rows below to help coordinate your schedule." />
+
+				<view class="line1" />
+
+				<absolute top="5" height="45">
+
+					<absolute width="turbo.WIDTH_20" left="0" height="fill">
+						<label text="Day"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Bold" />
+
+					</absolute>
+
+					<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_25" height="fill">
+
+						<label text="Limit"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Bold" />
+					</absolute>
+
+					<absolute width="turbo.WIDTH_45" left="turbo.WIDTH_45" height="fill">
+						<label text="Percent\nCapacity"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Bold"
+								 right="40"
+								 width="150"
+								 height="100" />
+					</absolute>
+
+
+				</absolute>
+
+
+				<view class="line1" top="3" />
+
+				<vertical height="size"
+							 top="15"
+							 dataCollection="current_reports"
+							 dataFilter="filter_reports"
+							 dataTransform="transform_reports">
+
+					<absolute height="50" top="10" onClick="turbo.openTabWindowHandler('employee-list', $model.day )">
+
+						<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_3" height="fill">
+							<label id="report_day"
+									 text="{day_formatted}"
+									 textAlign="left"
+									 fontSize="16"
+									 fontFamily="SFProDisplay-Medium" />
+
+						</absolute>
+
+						<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_25" height="fill">
+
+							<label id="report_limit"
+									 text="{limit_formatted}"
+									 textAlign="center"
+									 fontSize="16"
+									 fontFamily="SFProDisplay-Bold" />
+						</absolute>
+
+						<absolute width="turbo.WIDTH_40" left="turbo.WIDTH_45" height="35" backgroundColor="turbo.colors.secondary">
+							<absolute left="0" width="{percent_capacity_width}" backgroundColor="{graph_color}" height="35" />
+
+							<label id="report_percent_capacity"
+									 text="{percent_capacity_formatted}"
+									 textAlign="center"
+									 fontSize="16"
+									 fontFamily="SFProDisplay-Bold"
+									 color="white" />
+
+						</absolute>
+
+						<icon name="chevron-right" type="light" size="25" width="turbo.WIDTH_10" right="0" textAlign="center" color="black" />
+
+					</absolute>
+
+					<absolute height="1" backgroundColor="turbo.colors.background" width="turbo.WIDTH_75" top="3" />
+
+				</vertical>
+
+		</scroll-view>
+
+	</window>
+
+	<script>
+		logger.trace( `📌  you are here → inside office_scheduler.script block 2` );
+		Alloy.Collections.current_reports.trigger( 'fetch' );
+		logger.silly( `🦠  Alloy.Collections.current_reports.length: ${JSON.stringify( Alloy.Collections.current_reports.length, null, 2 )}` );
+	</script>
+</alloy>

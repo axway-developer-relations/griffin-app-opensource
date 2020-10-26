@@ -1,0 +1,9 @@
+node_modules
+build
+Resources
+*.jsonc
+*.json
+.internal
+docs
+plugins
+dist

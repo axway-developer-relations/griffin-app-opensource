@@ -1,0 +1,21 @@
+[
+	{
+		"name": "default",
+		"colors": {
+			"light": {
+				"primary": "#003C4C",
+				"primary2": "#00657f",
+				"secondary": "#005066",
+				"accent": "#4c1000",
+				"background": "#e3e4e2",
+				"surface": "#fafafa",
+				"black": "#1b1b1b",
+				"white": "#fafafa",
+				"red": "#d22630",
+				"darkgray": "#4a4f54",
+				"mediumgray": "#c8c9c7",
+				"lightgray": "#e3e4e2"
+			}
+		}
+	}
+]

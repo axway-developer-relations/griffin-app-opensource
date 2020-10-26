@@ -1,0 +1,330 @@
+<alloy>
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );
+		const { observe, unobserve, raw } = require( '@titanium/observer' );
+	</script>
+
+	<script>
+
+		( async () => {
+
+			const capacities = await turbo.api.capacities.getByProperty( 'office_id', turbo.app.data.current_office.id );
+			logger.debug( `🦠  all capacities: ${JSON.stringify( capacities, null, 2 )}` );
+			turbo.app.data.active_capacities = _.sortBy( _.filter( capacities, capacity => !capacity.end_day || capacity.end_day >= _.toInteger( moment().format( 'YYYYDDDD' ) ) ), 'start_day' );
+
+		} )();
+
+		const transform_capacities = model => {
+			const transform = model.toJSON();
+
+			transform.start_day_formatted = moment( transform.start_day, 'YYYYDDDD' ).format( 'M/D/Y' );
+			transform.end_day_formatted = transform.end_day ? moment( transform.end_day, 'YYYYDDDD' ).format( 'M/D/Y' ) : undefined;
+			transform.limit_formatted = transform.maximum || '0';
+			transform.percent_capacity_formatted = transform.percent_capacity || 0;
+
+			const full = Math.floor( turbo.WIDTH_20 );
+
+			if ( transform.percent_capacity === 'Closed' || transform.percent_capacity === 'N/A' ) {
+				transform.percent_capacity_width = full;
+				transform.percent_capacity_color = turbo.colors.primary;
+			} else {
+				transform.percent_capacity = parseInt( transform.percent_capacity );
+				transform.percent_capacity_width = _.clamp( Math.round( full * ( transform.percent_capacity / 100 ) ), 0, full );
+			}
+
+			transform.graph_color = ( transform.percent_capacity_width === full ) ? turbo.colors.danger : turbo.colors.info;
+
+			return transform;
+
+		}
+
+		let observer;
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+
+			turbo.tracker.screen_view( screen_name );
+
+			observer = observe( () => {
+				logger.track( `👀  you are here → ${screen_name}.observe()` );
+				try {
+					if ( turbo.app.data.current_reports && turbo.app.data.active_capacities ) {
+						logger.silly( `🦠  turbo.app.data.current_reports.length: ${turbo.app.data.current_reports.length}` );
+					}
+
+					Alloy.Collections.active_capacities.reset( turbo.app.data.active_capacities || [] );
+					Alloy.Collections.active_capacities.trigger( 'fetch' );
+					logger.verbose( `🦠  turbo.app.data.active_capacities: ${JSON.stringify( turbo.app.data.active_capacities, null, 2 )}` );
+
+					$.num_scheduled.text = _.get( turbo, 'app.data.current_reports[0].num_scheduled', '0' );
+					$.limit.text = _.get( turbo, 'app.data.current_reports[0].limit', '0' );
+					$.percent_capacity.text = _.trim( _.get( turbo, 'app.data.current_reports[0].percent_capacity', '0%' ) );
+					$.max_capacity.text = _.get( turbo, 'app.data.current_reports[0].max_capacity', '0' );
+					$.office_name.text = _.get( turbo, 'app.data.current_reports[0].office_name', 'No Office Selected' );
+
+					Alloy.Collections.current_reports.trigger( 'fetch' );
+					logger.debug( `🦠  Alloy.Collections.current_reports.length: ${JSON.stringify( Alloy.Collections.current_reports.length, null, 2 )}` );
+
+
+				} catch ( error ) {
+					console.error( error );
+					logger.error( error );
+				}
+
+			} );
+
+			turbo.closeLoadingScreen();
+
+			$.on( 'close', () => {
+				logger.track( '📌  you are here → ${screen_name}.onClose()' );
+				unobserve( observer );
+			} );
+
+			$.editCapacity = async e => {
+				logger.track( `📌  you are here → ${screen_name}.editCapacity` );
+				turbo.app.data.selected_capacity = _.clone( _.find( turbo.app.data.active_capacities, { id: e.source.capacity_id } ) );
+				logger.debug( `🦠  turbo.app.data.selected_capacity: ${JSON.stringify( turbo.app.data.selected_capacity, null, 2 )}` );
+				await turbo.openTabWindow( 'capacity-edit' );
+			}
+
+		}
+
+		const addCapacity = async e => {
+			logger.track( `📌  you are here → ${screen_name}.addCapacity` );
+			const today = _.toInteger( moment().format( 'YYYYDDDD' ) );
+			turbo.app.data.selected_capacity = { office_id: turbo.app.data.current_office.id, start_day: today, end_day: today }
+			logger.debug( `🦠  turbo.app.data.selected_capacity: ${JSON.stringify( turbo.app.data.selected_capacity, null, 2 )}` );
+			await turbo.openTabWindow( 'capacity-edit' );
+		}
+
+	</script>
+
+	<window title="Edit Office" onOpen="onOpen">
+
+		<scroll-view>
+			<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20">
+				<absolute top="15">
+
+					<label id="office_name"
+							 width="fill"
+							 left="20"
+							 textAlign="left"
+							 verticalAlign="center"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Heavy" />
+
+
+					<label text="Change"
+							 color="turbo.colors.primary_active"
+							 backgroundColor="turbo.colors.primary"
+							 width="80"
+							 height="30"
+							 right="15"
+							 textAlign="center"
+							 fontSize="15"
+							 fontFamily="SFProDisplay-Bold"
+							 onClick="turbo.openTabWindowHandler('offices-select')" />
+
+				</absolute>
+
+				<view class="line1" />
+
+				<horizontal top="15">
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+						<label text="Currently\nScheduled"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+						<label id="num_scheduled"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+
+						<label text="In-Office\nLimit"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+						<label id="limit"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+
+						<label text="Current\nCapacity"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+						<label id="percent_capacity"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 color="turbo.colors.danger"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+					<vertical width="turbo.WIDTH_20" left="turbo.WIDTH_3" debugColor="yellow">
+
+						<label text="Max\nCapacity"
+								 textAlign="center"
+								 fontSize="16"
+								 fontFamily="SFProDisplay-Light"
+								 width="fill" />
+
+						<label id="max_capacity"
+								 textAlign="center"
+								 fontSize="20"
+								 fontFamily="SFProDisplay-Black"
+								 width="fill"
+								 top="5" />
+					</vertical>
+
+				</horizontal>
+
+				<absolute height="20" />
+
+			</vertical>
+
+
+			<vertical id="upcoming-7-day-schedule" width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20" height="size">
+
+				<absolute top="10">
+
+					<label text="Active Office Capacities"
+							 width="fill"
+							 left="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Medium"
+							 height="size" />
+
+					<label text="Add New"
+							 color="turbo.colors.primary_active"
+							 backgroundColor="turbo.colors.primary"
+							 width="85"
+							 height="30"
+							 right="15"
+							 textAlign="center"
+							 fontSize="15"
+							 fontFamily="SFProDisplay-Bold"
+							 onClick="addCapacity" />
+
+				</absolute>
+
+				<view class="line1" />
+
+				<absolute top="5" height="40">
+
+					<absolute width="turbo.WIDTH_25" left="0" height="fill">
+						<label text="Start"
+								 textAlign="center"
+								 fontSize="15"
+								 fontFamily="SFProDisplay-Black" />
+
+					</absolute>
+
+					<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_25" height="fill">
+
+						<label text="End"
+								 textAlign="center"
+								 fontSize="15"
+								 fontFamily="SFProDisplay-Black" />
+					</absolute>
+
+					<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_50" height="fill">
+						<label text="Limit"
+								 textAlign="center"
+								 fontSize="15"
+								 fontFamily="SFProDisplay-Black"
+								 right="15"
+								 width="size" />
+					</absolute>
+
+				</absolute>
+
+
+				<view class="line1" top="10" />
+
+				<vertical height="size"
+							 top="15"
+							 dataCollection="active_capacities"
+							 _dataFilter="filter_capacities"
+							 dataTransform="transform_capacities">
+
+					<absolute height="25">
+
+						<absolute width="turbo.WIDTH_25" left="0" height="fill">
+							<label id="start_day"
+									 text="{start_day_formatted}"
+									 textAlign="center"
+									 fontSize="15"
+									 fontFamily="SFProDisplay-Medium" />
+
+						</absolute>
+
+						<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_25" height="fill">
+
+							<label id="end_day"
+									 text="{end_day_formatted}"
+									 textAlign="center"
+									 fontSize="15"
+									 fontFamily="SFProDisplay-Medium" />
+						</absolute>
+
+						<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_50" height="fill">
+
+							<label id="report_limit"
+									 text="{limit_formatted}"
+									 textAlign="center"
+									 fontSize="15"
+									 fontFamily="SFProDisplay-Medium" />
+						</absolute>
+
+
+						<absolute width="turbo.WIDTH_20" left="turbo.WIDTH_75" height="fill">
+
+							<label text="Edit"
+									 color="turbo.colors.primary_active"
+									 backgroundColor="turbo.colors.primary"
+									 width="70"
+									 height="30"
+									 textAlign="center"
+									 fontSize="15"
+									 fontFamily="SFProDisplay-Bold"
+									 capacity_id="{id}"
+									 onClick="$.editCapacity" />
+
+						</absolute>
+
+
+					</absolute>
+
+					<vertical height="20" />
+
+				</vertical>
+
+			</vertical>
+
+		</scroll-view>
+
+	</window>
+
+	<script>
+		Alloy.Collections.current_reports.trigger( 'fetch' );
+		logger.debug( `🦠  Alloy.Collections.current_reports.length: ${JSON.stringify( Alloy.Collections.current_reports.length, null, 2 )}` );
+	</script>
+</alloy>

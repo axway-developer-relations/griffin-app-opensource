@@ -1,0 +1,22 @@
+<alloy>
+
+	<script static="true" src="./base.js"></script>
+
+	<script>
+
+		const onOpen = e => {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+
+
+			$.window.title = $.args.title || 'Browser';
+			if( $.args.url ) {
+				$.webview.url = $.args.url;
+			}
+		}
+
+	</script>
+
+	<window id="window" title="" onOpen="onOpen">
+		<web-view id="webview" height="fill" width="fill" />
+	</window>
+</alloy>

@@ -1,0 +1,241 @@
+<alloy>
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );
+		const DEMO = false;
+	</script>
+
+	<script>
+
+		let isEmployeeScheduled = false;
+		let employee_schedule;
+		let has_openings = false;
+
+		// logger.debug( `🦠  $.args: ${JSON.stringify( $.args, null, 2 )}` );
+
+		$.selected_day = $.args.params[ 0 ];
+		$.day_formatted = moment( $.selected_day, 'YYYYDDDD' ).format( 'dddd, MMMM D, YYYY' );
+
+		const scheduled_day = parseInt( $.selected_day );
+		logger.debug( `🦠  scheduled_day: ${JSON.stringify( scheduled_day, null, 2 )}` );
+
+		const onOpen = async e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.app.data.schedules = await turbo.api.schedules.getMine();
+			await checkSchedule();
+		}
+
+		const checkSchedule = async () => {
+
+			employee_schedule = _.find( turbo.app.data.schedules, {
+				day: scheduled_day,
+				office_id: turbo.app.data.current_user.office_id,
+			} );
+
+			isEmployeeScheduled = !!employee_schedule;
+			logger.debug( `🦠  isEmployeeScheduled: ${JSON.stringify( isEmployeeScheduled, null, 2 )}` );
+
+			if ( !Alloy.Collections.scheduled_employees.length ) {
+				turbo.expand( $.no_scheduled_employees );
+			} else {
+				turbo.collapse( $.no_scheduled_employees );
+			}
+
+
+			if ( isEmployeeScheduled ) {
+				turbo.collapse( $.no_openings );
+				turbo.collapse( $.schedule_me );
+				turbo.expand( $.unschedule_me );
+			} else {
+
+				if ( has_openings ) {
+					turbo.collapse( $.no_openings );
+					turbo.collapse( $.unschedule_me );
+					turbo.expand( $.schedule_me );
+				} else {
+					turbo.expand( $.no_openings );
+				}
+			}
+
+		}
+
+		const scheduleMe = async () => {
+			turbo.openLoadingScreen();
+			turbo.tracker.schedule_update();
+
+			await turbo.api.schedules.add( {
+				office_id: turbo.app.data.current_user.office_id,
+				employee_id: turbo.app.data.current_user.id,
+				day: scheduled_day,
+			} )
+				.catch( error => {
+					console.error( error );
+					logger.error( error );
+				} );
+
+			turbo.app.data.schedules = await turbo.api.schedules.getMine( { force: true } );
+			await turbo.api.reports.query( { force: true } );
+			await updateReports();
+			await checkSchedule();
+			turbo.closeLoadingScreen();
+			alert( 'Schedule Updated' );
+		}
+
+		const unscheduleMe = async () => {
+			turbo.openLoadingScreen();
+			turbo.tracker.schedule_update();
+
+			if ( employee_schedule ) {
+				await turbo.api.schedules.delete( employee_schedule.id )
+					.catch( error => {
+						console.error( error );
+						logger.error( error );
+						turbo.tracker.error( error );
+					} );
+			}
+			turbo.app.data.schedules = await turbo.api.schedules.getMine( { force: true } );
+			await turbo.api.reports.query( { force: true } );
+			await updateReports();
+			await checkSchedule();
+			turbo.closeLoadingScreen();
+			alert( 'Schedule Updated' );
+		}
+
+
+
+	</script>
+
+	<window title="Scheduled Employees" onOpen="onOpen">
+		<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20">
+
+			<label id="office_name"
+					 text="turbo.app.data.current_office.name"
+					 width="fill"
+					 top="15"
+					 textAlign="center"
+					 verticalAlign="center"
+					 fontSize="25"
+					 fontFamily="SFProDisplay-Heavy" />
+
+
+			<label text="$.day_formatted"
+					 height="30"
+					 top="15"
+					 textAlign="center"
+					 fontSize="20"
+					 fontFamily="SFProDisplay-Medium" />
+
+			<view class="line1" />
+
+
+			<label width="turbo.WIDTH_80" top="20" text="Employees that have scheduled to be in the office on this day." textAlign="center" />
+
+			<absolute height="20" />
+
+		</vertical>
+
+		<absolute width="fill" height="50" top="15">
+
+			<label id="schedule_me"
+					 text="Schedule me for this day"
+					 color="turbo.colors.secondary_active"
+					 backgroundColor="turbo.colors.secondary"
+					 width="turbo.WIDTH_75"
+					 height="45"
+					 textAlign="center"
+					 fontFamily="SFProDisplay-Bold"
+					 onClick="scheduleMe"
+					 visibility="collapse" />
+
+			<label id="unschedule_me"
+					 text="Unschedule me for this day "
+					 color="turbo.colors.primary_active"
+					 backgroundColor="turbo.colors.primary"
+					 width="turbo.WIDTH_75"
+					 height="45"
+					 textAlign="center"
+					 fontFamily="SFProDisplay-Bold"
+					 onClick="unscheduleMe"
+					 visibility="collapse" />
+
+			<label id="no_openings"
+					 text="No available openings for this day "
+					 color="turbo.colors.primary_active"
+					 backgroundColor="turbo.colors.primary"
+					 width="turbo.WIDTH_75"
+					 height="45"
+					 textAlign="center"
+					 fontFamily="SFProDisplay-Bold"
+					 visibility="collapse" />
+
+		</absolute>
+
+		<scroll-view top="20">
+
+			<label id="no_scheduled_employees"
+					 text="No team members have use the app to schedule themselves for this day"
+					 top="50"
+					 fontSize="25"
+					 fontFamily="SFProDisplay-Medium"
+					 width="turbo.WIDTH_65"
+					 textAlign="center"
+					 height="size"
+					 visibility="collapse"
+					 collapseMargins="true" />
+
+			<vertical width="turbo.WIDTH_95"
+						 dataCollection="scheduled_employees"
+						 modelName="employeeName"
+						 backgroundColor="turbo.colors.surface"
+						 top="0"
+						 height="size">
+
+				<absolute width="size"
+							 height="50"
+							 touchEnabled="true"
+							 office_id="">
+
+					<label text="{name}"
+							 width="fill"
+							 left="20"
+							 top="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Bold"
+							 height="20"
+							 touchEnabled="false" />
+
+				</absolute>
+
+				<view class="line1" />
+
+			</vertical>
+
+			<view id="bottom-spacer" height="turbo.HEIGHT_40" />
+
+		</scroll-view>
+
+	</window>
+	<script>
+		let filtered_report = [];
+
+		const updateReports = async () => {
+
+			const demo_names = [];
+			const report_day = _.find( turbo.app.data.current_reports, { day: $.selected_day } );
+			logger.debug( `🦠  report_day: ${JSON.stringify( report_day, null, 2 )}` );
+
+			has_openings = _.lt( report_day.num_scheduled, report_day.limit );
+			const employees = DEMO ? demo_names : _.get( report_day, 'scheduled_employees', [] );
+
+			filtered_report = _.map( employees, name => { return { name } } );
+
+			Alloy.Collections.scheduled_employees.reset( filtered_report );
+		}
+
+		updateReports();
+
+	</script>
+
+</alloy>

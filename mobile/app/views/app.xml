@@ -1,0 +1,35 @@
+<alloy>
+	<script static="true" src="./base.js"></script>
+
+	<script>
+
+		function onOpen() {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+		}
+
+	</script>
+	<tab-group id="app"
+				  alias="mainWindow"
+				  title="turbo.app_display_name"
+				  navBarHidden="true"
+				  onOpen="onOpen"
+				  android:exitOnClose="false"
+				  onBack="turbo.noop"
+				  onAndroidback="turbo.noop">
+
+		<tab id="tab1" title="Schedule" icon="/images/tabs/calendar-alt.png">
+			<require src="office-scheduler" />
+		</tab>
+		<tab id="tab2" title="News" icon="/images/tabs/newspaper.png">
+			<require src="news" />
+		</tab>
+		<!-- <tab id="tab3" title="Search" icon="/images/tabs/search.png">
+			<require src="blank" />
+		</tab> -->
+		<tab id="tab4" title="Settings" icon="/images/tabs/user.png">
+			<require src="settings" />
+		</tab>
+	</tab-group>
+</alloy>

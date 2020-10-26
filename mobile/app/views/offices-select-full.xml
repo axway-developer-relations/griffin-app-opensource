@@ -1,0 +1,125 @@
+<alloy>
+
+	<script static="true" src="./base.js"></script>
+
+	<script>
+
+      let selected = false;
+      async function select_office( e ) {
+         logger.track( '📌  you are here → offices-select-full.select_office()' );
+         if ( selected ) { return }
+
+         selected = true;
+
+         turbo.openLoadingScreen();
+         e.source.backgroundColor = turbo.colors.secondary;
+         e.source.children[ 0 ].color = turbo.colors.secondary_active;
+         e.source.children[ 1 ].color = turbo.colors.secondary_active;
+         turbo.app.data.current_user.office_id = e.source.office_id;
+         await turbo.api.employees.update( turbo.app.data.current_user );
+
+         // turbo.app.data.current_office = _.find(turbo.app.data.offices, { id: turbo.app.data.current_user.office_id });
+
+         Alloy.close( 'offices-select-full' );
+         turbo.open_primary_screen();
+
+      }
+
+      const onOpen = e => {
+
+         logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+         turbo.tracker.screen_view( screen_name );
+
+      }
+
+
+   </script>
+
+   <navigation-window id="navigationWindow">
+
+      <window title="Select Office">
+
+         <scroll-view debugColor="blue" top="20" backgroundColor="turbo.colors.background">
+
+            <label width="turbo.WIDTH_80"
+                   top="0"
+                   text="Please select your office location. If you normally work remote, just select the closest office location to you." />
+
+            <absolute width="fill" top="15" height="50" debugColor="orange">
+
+               <label text="Office Name"
+                      width="size"
+                      left="20"
+                      textAlign="left"
+                      fontSize="20"
+                      fontFamily="SFProDisplay-Black"
+                      height="fill"
+                      touchEnabled="false" />
+
+               <label text="Max Capacity"
+                      width="size"
+                      right="20"
+                      textAlign="left"
+                      fontSize="20"
+                      fontFamily="SFProDisplay-Black"
+                      height="fill"
+                      touchEnabled="false" />
+
+            </absolute>
+
+            <vertical height="size"
+                      dataCollection="offices"
+                      backgroundColor="turbo.colors.surface"
+                      debugColor="red"
+                      top="0"
+                      left="15"
+                      right="15">
+
+               <absolute width="fill"
+                         top="0"
+                         height="50"
+                         touchEnabled="true"
+                         onClick="select_office"
+                         debugColor="yellow"
+                         office_id="{id}">
+
+                  <label text="{name}"
+                         width="size"
+                         top="15"
+                         left="20"
+                         textAlign="left"
+                         fontSize="20"
+                         fontFamily="SFProDisplay-Bold"
+                         height="20"
+
+                         touchEnabled="false" />
+
+                  <label text="{max_capacity}"
+                         width="size"
+                         top="15"
+                         right="20"
+                         textAlign="left"
+                         fontSize="20"
+                         fontFamily="SFProDisplay-Bold"
+                         height="20"
+                         touchEnabled="false" />
+
+               </absolute>
+
+               <absolute class="line1" top="0" />
+
+            </vertical>
+
+            <absolute id="bottom-spacer" height="turbo.HEIGHT_40" debugColor="green" />
+
+         </scroll-view>
+
+      </window>
+
+   </navigation-window>
+   <script>
+      Alloy.Collections.offices.trigger( 'fetch' );
+      logger.debug( `🦠  Alloy.Collections.offices.length: ${JSON.stringify( Alloy.Collections.offices.length, null, 2 )}` );
+   </script>
+
+</alloy>

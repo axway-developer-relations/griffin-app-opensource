@@ -1,0 +1,24 @@
+<alloy>
+
+	<script static="true" src="./base.js"></script>
+	<script>
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+		}
+	</script>
+
+
+	<window id="window" title="Legal Agreement" layout="composite" onOpen="onOpen" width="fill">
+
+		<absolute backgroundColor="turbo.colors.secondary" height="25" top="0" />
+
+		<scroll-view scrollType="vertical" top="25" bottom="0" left="turbo.WIDTH_3" right="turbo.WIDTH_3">
+			<label text="require('/content/legal-consent.js')" width="turbo.WIDTH_90" />
+		</scroll-view>
+
+	</window>
+
+</alloy>

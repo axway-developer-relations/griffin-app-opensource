@@ -1,0 +1,8 @@
+Project "my-project" {
+
+}
+
+Table users {
+  id string [pk, note: 'built-in database field'] 
+  note: "This entity represents a user in the system"
+}

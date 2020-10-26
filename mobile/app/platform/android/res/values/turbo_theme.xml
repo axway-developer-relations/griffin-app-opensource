@@ -1,0 +1,6 @@
+<resources>
+  <style name="turbo_theme" parent="Theme.AppCompat.Light">
+    <item name="itemIconTint">@drawable/tab_icon_color_state</item>
+    <item name="android:textColorSecondary">@android:color/transparent</item>
+  </style>
+</resources>

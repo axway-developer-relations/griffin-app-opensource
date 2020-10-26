@@ -1,0 +1,156 @@
+<alloy>
+
+	<script src="./base.js" static="true">
+		const webdialog = require('@titanium/webdialog');
+	</script>
+
+	<script>
+
+		const closeWindow = () => {
+			$.about.close();
+		}
+
+		const onOpen = e => {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+		}
+
+	
+	</script>
+
+	<window id="about" title="About this app" layout="vertical" android:exitOnClose="false" onBack="closeWindow" onOpen="onOpen">
+
+		<action-bar platform="android" displayHomeAsUp="true" onHomeIconItemSelected="closeWindow" />
+
+
+		<table-view id="tableview" backgroundColor="turbo.colors.background" separatorColor="turbo.colors.background_disabled">
+
+			<table-view-section id="general">
+
+				<header-view>
+
+					<absolute backgroundColor="turbo.colors.background" class="header-view" height="120">
+
+						<image src="/images/logos/axway-light2.png" width="100" height="100" left="15" />
+
+						<vertical left="115" height="size">
+
+							<label text="turbo.app_display_name"
+									 color="turbo.colors.background_active"
+									 textAlign="center"
+									 fontSize="25"
+									 fontFamily="SFProDisplay-Black"
+									 top="0" />
+
+
+							<label text="AMPLIFY #bettertogether" color="turbo.colors.red" textAlign="center" fontSize="18" top="10" />
+						</vertical>
+					</absolute>
+				</header-view>
+				<table-view-row>
+					<icon name="mobile-alt" class="row-icon" />
+					<label text="turbo.app_display_name" class="row-title" />
+					<label text="turbo.app_version" class="row-value" />
+				</table-view-row>
+				<table-view-row>
+					<icon name="tools" class="row-icon" />
+					<label text="Titanium SDK" class="row-title" />
+					<label text="turbo.titanium_sdk_version" class="row-value" />
+				</table-view-row>
+				<table-view-row>
+					<icon name="rocket-launch" class="row-icon" />
+					<label text="Titanium Turbo" class="row-title" />
+					<label text="turbo.version" class="row-value" />
+				</table-view-row>
+			</table-view-section>
+			<table-view-section id="tech">
+				<header-view>
+					<vertical backgroundColor="turbo.colors.primary" class="header-view" height="110">
+						<label text="Powered by Axway AMPLIFY" color="turbo.colors.primary_active" textAlign="center" fontSize="21" fontFamily="SFProDisplay-Black" top="20" />
+						<label text="This app uses all of these AMPLIFY products!" color="turbo.colors.primary_active" textAlign="center" width="85%" top="15" fontSize="15" />
+					</vertical>
+				</header-view>
+				<table-view-row>
+					<ImageView image="/images/logos/axway.png" height="35" width="35" left="15" />
+					<label text="AMPLIFY MBaaS" color="turbo.colors.background_active" left="75" width="size" fontFamily="SFProDisplay-Medium" />
+				</table-view-row>
+				<table-view-row>
+					<ImageView image="/images/logos/axway.png" height="35" width="35" left="15" />
+					<label text="AMPLIFY Runtime Services" color="turbo.colors.background_active" left="75" width="size" />
+				</table-view-row>
+				<table-view-row>
+					<image src="/images/logos/axway.png" height="35" width="35" left="15" />
+					<label text="AMPLIFY API Builder v4" color="turbo.colors.background_active" left="75" width="size" />
+				</table-view-row>
+				<table-view-row>
+					<image src="/images/logos/axway.png" height="35" width="35" left="15" />
+					<label text="AMPLIFY Titanium Mobile" color="turbo.colors.background_active" left="75" width="size" />
+				</table-view-row>
+				<table-view-row>
+					<image src="/images/logos/axway.png" height="35" width="35" left="15" />
+					<label text="AMPLIFY Central" color="turbo.colors.background_active" left="75" width="size" />
+				</table-view-row>
+				<table-view-row>
+					<image src="/images/logos/axway.png" height="35" width="35" left="15" />
+					<label text="AMPLIFY Integration Builder" color="turbo.colors.background_active" left="75" width="size" />
+				</table-view-row>
+				<table-view-row>
+					<image src="/images/logos/axway.png" height="35" width="35" left="15" />
+					<label text="AMPLIFY Streams" color="turbo.colors.background_active" left="75" width="size" />
+				</table-view-row>
+				<!-- <footer-view>
+						<View backgroundColor="turbo.colors.background" class="header-view" />
+					</footer-view> -->
+			</table-view-section>
+
+			<table-view-section>
+				<!-- <header-view>
+					<absolute backgroundColor="turbo.colors.background" class="header-view" height="50" />
+				</header-view> -->
+				<header-view>
+					<vertical backgroundColor="turbo.colors.secondary" class="header-view" height="110">
+						<label text="App Dependency Packages" color="turbo.colors.secondary_active" textAlign="center" fontSize="21" fontFamily="SFProDisplay-Black" top="20" />
+						<label text="npm packages used by this app" color="turbo.colors.secondary_active" textAlign="center" width="85%" top="15" fontSize="15" />
+					</vertical>
+				</header-view>				
+				<footer-view>
+					<View backgroundColor="turbo.colors.background" class="header-view" />
+				</footer-view>
+			</table-view-section>
+
+
+
+		</table-view>
+
+	</window>
+
+	<script>
+
+		// //TIBUG: Can't databind to TableViewSection - https://jira.appcelerator.org/browse/TIMOB-24725
+
+		for( const dependency of Alloy.dependency_registry ){
+
+			const icon = turbo.createIcon({ class: 'row-icon', name:'mobile-alt'});
+			const name = turbo.createLabel({ text: dependency.name, class: 'row-title' });
+			const version = turbo.createLabel({ text: dependency.version, class: 'row-value' });
+			
+			const row = Ti.UI.createTableViewRow({ height: 55, backgroundColor: turbo.colors.surface });
+			
+			row.add(turbo.createIcon({color: turbo.colors.primary, size: 25, left: 15, type: "solid", name: "rocket-launch",  name:'mobile-alt'}));
+		
+			row.add(turbo.createLabel({ color: turbo.colors.text, font: { fontSize: 17, fontFamily: "SFProDisplay-Medium" }, includeFontPadding: false, left: 55, text: dependency.name }));
+			
+			row.add(turbo.createLabel({ color: turbo.colors.primary, font: { fontSize: 17, fontFamily: "SFProDisplay-Medium" }, includeFontPadding: false, right: 40, text: dependency.version }));
+
+			row.add(turbo.createIcon({color: turbo.colors.text, name: "chevron-right", type: "light", size: 25, right: 15}));
+
+			row.addEventListener('click', () => {
+				// Ti.Platform.openURL(`https://www.npmjs.com/package/${dependency.name}`);
+				turbo.openTabWindow({ name: 'webview', title: dependency.name, url: `https://www.npmjs.com/package/${dependency.name}`});
+			});
+
+			$.__views["tableview"].appendRow(row);
+		}
+
+	</script>
+</alloy>

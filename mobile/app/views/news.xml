@@ -1,0 +1,112 @@
+<alloy>
+
+	<script src="./base.js" static="true">
+		var moment = require( 'moment' );
+		const { retry } = require(`@geek/retry`);
+	</script>
+
+	<script>
+
+		const onClick = e => {
+			logger.track( `📌  You are here → ${screen_name}.onClick()` );
+			var model = Alloy.Collections.articles.at( e.source.index ).toJSON();
+			turbo.tracker.article_open( model.id );
+			require( '@titanium/webdialog' ).open( { url: model.permalink } );
+		}
+
+		const onRefresh = async e => {
+			logger.track( `📌  you are here → ${screen_name}.onRefresh()` );
+			await retry(() => turbo.api.articles.query({ force: true }), { retries: 3, delay: 100 });
+			$.refresh.endRefreshing();
+		}
+
+		const transform_articles = model => {
+			const transform = model.toJSON();
+
+			// transform.author_avatar = `https://resources.axway.dev/avatars/${transform.author_id}.jpg`;
+			transform.source_logo = `/images/logos/${transform.source}.png`
+			return transform;
+
+		}
+
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+			retry(() => turbo.api.articles.query({ force: true }), { retries: 1, delay: 100 });
+
+		}
+
+	</script>
+
+	<window title="Axway News" onOpen="onOpen">
+
+		<!-- <TabbedBar id="filterTabBar" index="0" top="0">
+			<Labels id="tabbedBarLabels">
+				<Label title="Recent News"></Label>
+				<Label title="Recommended Articles"></Label>
+			</Labels>
+      </TabbedBar> -->
+
+		<scroll-view backgroundColor="turbo.colors.background_primary" top="10">
+
+			<refresh-control id="refresh" tintColor="turbo.colors.primary" onRefreshstart="onRefresh" />
+
+			<vertical top="0" dataCollection="articles" dataTransform="transform_articles">
+
+				<absolute height="140" id="row" left="5" onClick="onClick" modelId="{id}" index="~i~" backgroundColor="turbo.colors.surface">
+
+					<image image="{avatar}"
+							 defaultImage="/images/generic-profile-photo.png"
+							 width="90"
+							 height="90"
+							 left="0"
+							 top="5"
+							 touchEnabled="false" />
+
+					<vertical debugColor="blue" class="textContainer" height="150" left="100" right="10" top="5" touchEnabled="false">
+
+						<label debugColor="blue" left="0" maxLines="2" textAlign="left" top="0" verticalAlign="top" width="fill" fontSize="15" fontWeight="bold" height="size" text="{title}" touchEnabled="false" />
+
+						<horizontal height="20" width="size" top="5" left="0" touchEnabled="false">
+
+							<label debugColor="red" left="0" maxLines="1" textAlign="left" top="0" verticalAlign="top" width="150" fontSize="13" text="{author_name}" touchEnabled="false" color="turbo.colors.surface_active" height="size" />
+
+							<image height="15" src="{source_logo}" left="10" top="0" width="15" />
+
+							<label fontSize="12" left="10" textAlign="left" top="0" verticalAlign="center" width="60" text="{source}" touchEnabled="false" color="turbo.colors.surface_active" />
+
+						</horizontal>
+
+						<label debugColor="blue" left="0" maxLines="3" textAlign="left" top="5" verticalAlign="top" width="fill" fontSize="13" color="turbo.colors.surface_subtle" text="{content}" if="$model.content.length" touchEnabled="false" height="size" />
+
+						<!-- <View height="25" width="Ti.UI.FILL" layout="horizontal" top="10">
+						<Label fontSize="12" left="0" textAlign="left" top="0" verticalAlign="center" width="fill" text="~moment(article.__transform.source_published).fromNow()~" />
+               </View> -->
+
+					</vertical>
+
+					<label fontSize="12"
+							 left="0"
+							 textAlign="center"
+							 top="105"
+							 verticalAlign="center"
+							 width="90"
+							 text="~moment($model.source_published).fromNow()~" touchEnabled="false"
+							 color="turbo.colors.surface_subtle" />
+
+				</absolute>
+
+			</vertical>
+
+		</scroll-view>
+
+	</window>
+
+	<script>
+		Alloy.Collections.articles.trigger( 'fetch' );
+		logger.debug( `🦠  Alloy.Collections.articles.length: ${JSON.stringify( Alloy.Collections.articles.length, null, 2 )}` );
+	</script>
+
+</alloy>

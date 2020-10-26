@@ -1,0 +1,141 @@
+<alloy>
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );	
+	</script>
+
+	<script>
+
+		async function delete_schedule( e ) {
+			logger.track( '📌  you are here → schedules-list.delete_schedule()' );
+			turbo.openLoadingScreen();
+			logger.debug( `🦠  schedule_id: ${JSON.stringify( e.source.schedule_id, null, 2 )}` );
+			await turbo.api.schedules.delete( e.source.schedule_id )
+				.catch( error => {
+					console.error( error );
+					logger.error( error );
+					turbo.tracker.error( error );
+				} );
+
+			await turbo.api.schedules.query( { force: true } );
+			await turbo.api.reports.query( { force: true } );
+
+			turbo.closeLoadingScreen();
+
+		}
+
+		const transform_schedules = model => {
+			const transform = model.toJSON();
+
+			transform.day_formatted = moment( transform.day, 'YYYYDDDD' ).format( 'MMM DD, YYYY' );
+			transform.office_name = _.get( _.find( turbo.app.data.offices, { id: transform.office_id } ), 'name', 'Unknown Office' );
+			return transform;
+
+		}
+
+		const filter_schedules = collection => {
+			// const filtered = collection.where( { employee_id: turbo.app.data.current_user.id } );
+			const filtered = collection.filter( model => {
+
+				const item = model.toJSON();
+
+				return ( item.employee_id === _.get( turbo, 'app.data.current_user.id', "NO_USER_AUTHENTICATED" ) ) && ( item.day >= moment().format( 'YYYYDDDD' ) );
+			} );
+
+			return filtered;
+		}
+
+		const closeWindow = async e => {
+			$.window.close();
+		}
+
+
+	</script>
+
+	<window id="window" title="My Schedule" onBack="closeWindow">
+
+		<action-bar platform="android" displayHomeAsUp="true" onHomeIconItemSelected="closeWindow" />
+
+		<scroll-view debugColor="orange" top="20">
+
+			<label text="Schedule New Time"
+					 color="turbo.colors.primary_active"
+					 top="15"
+					 backgroundColor="turbo.colors.primary"
+					 width="turbo.WIDTH_42"
+					 height="45"
+					 textAlign="center"
+					 fontFamily="SFProDisplay-Bold"
+					 onClick="turbo.openTabWindowHandler('offices-select')" />
+
+
+			<label width="turbo.WIDTH_80" top="15" text="Here is the list of days that you are currently scheduled to be in the office." textAlign="center" fontSize="18" />
+
+
+			<vertical width="fill"
+						 dataCollection="schedules"
+						 dataTransform="transform_schedules"
+						 dataFilter="filter_schedules"
+						 backgroundColor="turbo.colors.surface"
+						 debugColor="red"
+						 top="20"
+						 left="15"
+						 right="15">
+
+				<absolute width="size"
+							 top="15"
+							 height="50"
+							 touchEnabled="true"
+							 debugColor="yellow">
+
+					<label text="{day_formatted}"
+							 width="fill"
+							 left="20"
+							 top="0"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Bold"
+							 height="20"
+							 touchEnabled="false" />
+
+					<label text="{office_name}"
+							 width="fill"
+							 left="20"
+							 top="30"
+							 textAlign="left"
+							 fontSize="18"
+							 fontFamily="SFProDisplay-Light"
+							 height="20"
+							 touchEnabled="false" />
+
+					<label text="Delete"
+							 color="white"
+							 backgroundColor="turbo.colors.primary"
+							 width="80"
+							 height="35"
+							 right="15"
+							 textAlign="center"
+							 fontSize="16"
+							 fontFamily="SFProDisplay-Bold"
+							 schedule_id="{id}"
+							 onClick="delete_schedule" />
+
+				</absolute>
+
+				<view class="line1" />
+
+			</vertical>
+
+			<view id="bottom-spacer" height="turbo.HEIGHT_40" />
+
+		</scroll-view>
+
+	</window>
+
+	<script>
+		Alloy.Collections.schedules.trigger( 'fetch' );
+		Alloy.Collections.schedules.sort();
+		logger.debug( `🦠  Alloy.Collections.schedules.length: ${JSON.stringify( Alloy.Collections.schedules.length, null, 2 )}` );
+	</script>
+
+</alloy>

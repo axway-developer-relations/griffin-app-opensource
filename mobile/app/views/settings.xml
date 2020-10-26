@@ -1,0 +1,293 @@
+<alloy>
+
+	<script static="true" src="./base.js"></script>
+
+	<script>
+
+		const anonymous_switch_value = !_.get(turbo, 'app.data.current_user.anonymous', true);
+		logger.debug(`🦠  anonymous_switch_value: ${JSON.stringify(anonymous_switch_value, null, 2)}`);
+
+		const onOpen = e => {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+			logger.debug(`🦠  turbo.app.data.current_user.anonymous: ${JSON.stringify(turbo.app.data.current_user.anonymous, null, 2)}`);
+			logger.debug(`🦠  $.anonymousSwitch.value: ${JSON.stringify($.anonymousSwitch.value, null, 2)}`);
+
+			$.betaSwitch.value = turbo.allow_beta_updates;
+			$.anonymousSwitch.value = !turbo.app.data.current_user.anonymous;
+
+			// Android seems to trigger the change event on window load so adding it here.
+			$.anonymousSwitch.addEventListener('change',toggle_privacy_hide_name);
+		}
+
+		const check_for_updates = async e => {
+			logger.track( `📌  you are here → ${screen_name}.check_for_updates()` );
+			turbo.feedback.medium();
+			let updateStatus;
+			try {
+				turbo.tracker.app_update_check();
+				updateStatus = await turbo.checkForUpdates( { optional: true } );
+			} catch ( error ) {
+				console.error( error );
+				logger.error( error );
+				turbo.tracker.error(error);
+			}
+
+			logger.track( `📌  you are here → ${screen_name}.check_for_updates() complete` );
+			if ( updateStatus ) {
+				alert( 'You are up to date!' );
+			}
+		}
+
+		const open_teams_support_channel = e => {
+			logger.track( `📌  you are here → ${screen_name}.open_teams_support_channel()` );
+			turbo.feedback.medium();
+			Ti.Platform.openURL( Ti.App.Properties.getString( 'teams-support-channel' ) );
+			turbo.tracker.open_teams();
+		}
+
+		const toggle_beta_installs = e => {
+			logger.track( `📌  you are here → ${screen_name}.toggle_beta_installs()` );
+			turbo.feedback.medium();
+			turbo.allow_beta_updates = $.betaSwitch.value;
+			Ti.App.Properties.setBool( 'turbo.allow_beta_updates', $.betaSwitch.value );
+			let channel = $.betaSwitch.value ? 'beta' : 'release';
+			turbo.tracker.toggle_beta();
+			turbo.createUpdater( { channel } );
+		}
+
+
+
+		const accept_sharing = async e => {
+			// logger.debug( `🦠  e: ${JSON.stringify( e, null, 2 )}` );
+
+			if( e.cancel === e.index ){
+				$.anonymousSwitch.value = false;
+			} else {
+				alert( 'Your settings are being updated and will be applied shortly.' );
+				logger.trace( `📌  you are here → after alert` );
+				if ( turbo.app.data.current_user ) {
+					turbo.app.data.current_user.anonymous = false;
+					await turbo.api.employees.update( turbo.app.data.current_user );
+					turbo.tracker.toggle_anonymous( { anonymous: turbo.app.data.current_user.anonymous } );
+					await turbo.api.reports.query( { force: true } );
+				}
+			}
+
+
+
+		}
+
+		const toggle_privacy_hide_name = async e => {
+			logger.track( `📌  you are here → ${screen_name}.toggle_privacy_hide_name()` );
+			turbo.feedback.medium();
+
+			logger.debug(`🦠  $.anonymousSwitch.value: ${JSON.stringify($.anonymousSwitch.value, null, 2)}`);
+			logger.debug(`🦠  e: ${JSON.stringify(e, null, 2)}`);
+
+			if ( $.anonymousSwitch.value ) {
+				$.schedule_sharing_dialog.show();
+			} else {
+				alert( 'Your settings are being updated and will be applied shortly.' );
+				logger.trace( `📌  you are here → after alert` );
+				if ( turbo.app.data.current_user ) {
+					turbo.app.data.current_user.anonymous = true;
+					await turbo.api.employees.update( turbo.app.data.current_user );
+					turbo.tracker.toggle_anonymous( { anonymous: turbo.app.data.current_user.anonymous } );
+					await turbo.api.reports.query( { force: true } );
+				}
+			}
+
+
+		}
+
+	</script>
+
+	<window title="Settings" onOpen="onOpen">
+
+		<table-view debugColor="orange" top="0" backgroundColor="turbo.colors.background">
+
+			<table-view-section id="general">
+
+				<header-view>
+
+					<absolute height="150" backgroundColor="turbo.colors.background">
+
+						<vertical>
+
+							<image top="15"
+									 height="90"
+									 borderRadius="45"
+									 width="90"
+									 defaultImage="/images/generic-profile-photo.png"
+									 src="turbo.app.data.current_user.avatar" />
+
+
+							<label text="turbo.app.data.current_user.formatted_name"
+									 fontSize="24"
+									 top="5"
+									 fontFamily="SFProDisplay-Heavy"
+									 color="turbo.colors.foreground_tertiary" />
+
+							<view height="20" />
+
+						</vertical>
+
+					</absolute>
+
+				</header-view>
+
+				<table-view-row>
+
+					<icon name="tag" class="row-icon" />
+					<label text="App Version" class="row-title" />
+					<label text="turbo.app_version" class="row-value" />
+
+				</table-view-row>
+
+				<table-view-row id="about-row" onClick="turbo.openTabWindowHandler('about')">
+
+					<icon name="info-circle" class="row-icon" />
+					<label text="About" class="row-title" />
+					<icon name="chevron-right" type="light" size="25" right="20" />
+
+				</table-view-row>
+
+			</table-view-section>
+
+			<table-view-section id="security">
+
+				<header-view>
+					<absolute backgroundColor="turbo.colors.background_secondary" />
+				</header-view>
+
+				<!-- <table-view-row id="logout-row" onClick="turbo.authentication.logout"> -->
+				<table-view-row id="logout-row" onClick="turbo.logout">
+
+					<icon name="sign-out-alt" class="row-icon" />
+					<label text="Sign Out" class="row-title" />
+					<icon name="chevron-right" type="light" size="25" right="20" />
+
+				</table-view-row>
+
+			</table-view-section>
+
+			<table-view-section id="support">
+
+				<header-view>
+					<absolute height="60"
+								 backgroundColor="turbo.colors.background">
+						<label text="Support"
+								 color="turbo.colors.background_active"
+								 fontSize="22"
+								 fontFamily="SFProDisplay-Heavy" />
+					</absolute>
+				</header-view>
+
+				<table-view-row onClick="open_teams_support_channel">
+
+					<icon name="users" class="row-icon" />
+					<label text="Microsoft Teams" class="row-title" />
+					<icon name="chevron-right" type="light" size="25" right="20" />
+
+				</table-view-row>
+
+
+				<table-view-row onClick="check_for_updates">
+
+					<icon name="tools" class="row-icon" />
+					<label text="Check for updates" class="row-title" />
+					<icon name="chevron-right" type="light" size="25" right="20" />
+
+				</table-view-row>
+
+			</table-view-section>
+
+
+			<table-view-section id="privacy">
+
+				<header-view>
+					<absolute height="60"
+								 backgroundColor="turbo.colors.background">
+						<label text="Privacy Options"
+								 color="turbo.colors.background_active"
+								 fontSize="22"
+								 fontFamily="SFProDisplay-Heavy" />
+					</absolute>
+				</header-view>
+
+				<table-view-row>
+
+					<icon name="eye-slash" class="row-icon" />
+					<label text="Schedule visible to peers" class="row-title" />
+					<switch id="anonymousSwitch" _onChange="toggle_privacy_hide_name" right="20" />
+
+				</table-view-row>
+
+				<table-view-row onClick="turbo.openTabWindowHandler('legal')">
+
+					<icon name="file-contract" class="row-icon" />
+					<label text="Privacy Agreement" class="row-title" />
+					<icon name="chevron-right" type="light" size="25" right="20" />
+
+				</table-view-row>
+
+			</table-view-section>
+
+
+			<table-view-section id="advanced">
+
+				<header-view>
+					<absolute height="60"
+								 backgroundColor="turbo.colors.background">
+						<label text="Advanced Options"
+								 color="turbo.colors.background_active"
+								 fontSize="22"
+								 fontFamily="SFProDisplay-Heavy" />
+					</absolute>
+				</header-view>
+
+				<table-view-row>
+
+					<icon name="flask" class="row-icon" />
+					<label text="Beta Updates" class="row-title" />
+					<switch id="betaSwitch" onChange="toggle_beta_installs" right="20" />
+
+				</table-view-row>
+
+				<table-view-row onClick="turbo.openTabWindowHandler('device-info')">
+
+					<icon name="brackets-curly" class="row-icon" />
+					<label text="Developer Resources" class="row-title" />
+					<icon name="chevron-right" type="light" size="25" right="20" />
+
+				</table-view-row>
+
+			</table-view-section>
+
+			<table-view-section>
+
+				<header-view>
+					<absolute backgroundColor="turbo.colors.background" height="50" />
+				</header-view>
+				<footer-view>
+					<absolute backgroundColor="turbo.colors.background" />
+				</footer-view>
+
+			</table-view-section>
+
+		</table-view>
+
+	</window>
+
+	<alert-dialog id="schedule_sharing_dialog" onClick="accept_sharing" title="Office Schedule Sharing" message="require('/content/share-schedule')">
+		<button-names>
+			<button-name cancel="true">Cancel</button-name>
+			<button-name preferred="true">Confirm</button-name>
+		</button-names>
+	</button-names>
+
+	</alert-dialog>
+
+</alloy>

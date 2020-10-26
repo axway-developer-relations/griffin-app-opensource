@@ -1,0 +1,57 @@
+<alloy>
+	<script static="true" src="./base.js"></script>
+	<script>
+
+		const onOpen = async e => {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			await turbo.closeLoadingScreen();
+			openDialog();
+		}
+
+		const openDialog = e => {
+			logger.track( `📖  you are here → ${screen_name}.openDialog()` );
+			turbo.events.fire( 'codeflow::open::dialog' );
+		}
+
+	</script>
+
+	<window id="login-required"
+			  onOpen="onOpen"
+			  layout="absolute"
+			  backgroundColor="turbo.colors.primary"
+			  height="fill"
+			  android:exitOnClose="false"
+			  onBack="turbo.noop"
+			  onAndroidback="turbo.noop">
+
+
+		<vertical>
+
+			<image src="/images/logos/app.png"
+					 width="turbo.WIDTH_75" />
+
+			<label text="Login"
+					 backgroundColor="turbo.colors.primary"
+					 color="turbo.colors.primary_active"
+					 borderColor="turbo.colors.primary_active"
+					 borderWidth="3"
+					 width="turbo.WIDTH_42"
+					 height="50"
+					 top="15"
+					 textAlign="center"
+					 fontFamily="SFProDisplay-Medium"
+					 fontSize="26"
+					 onClick="openDialog" />
+
+
+			<label text="`Version: ${turbo.app_version}`"
+					 top="30"
+					 fontSize="20"
+					 fontFamily="SFProDisplay-Medium"
+					 color="turbo.colors.foreground_tertiary" />
+
+		</vertical>
+
+
+	</window>
+</alloy>

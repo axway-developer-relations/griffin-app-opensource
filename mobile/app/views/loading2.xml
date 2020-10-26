@@ -1,0 +1,46 @@
+<alloy>
+	<script static="true" src="./base.js"></script>
+	<script>
+		if ( _.isString( $.args ) ) {
+			$.args = { message: $.args };
+		}
+		$.args.message = $.args.message || 'Loading...';
+		const onOpen = e => {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+		}
+	</script>
+
+	<window id="loading2"
+			  onOpen="onOpen"
+			  layout="absolute"
+			  backgroundColor="transparent"
+			  height="fill"
+			  android:exitOnClose="false">
+
+		<blur-view width="fill"
+					  height="fill"
+					  effect="Ti.UI.iOS.BLUR_EFFECT_STYLE_LIGHT">
+
+			<animation-view id="lottie"
+								 module="@titanium/lottie"
+								 file="/animations/lottie-rocket2.json"
+								 loop="true"
+								 autoStart="true"
+								 width="turbo.WIDTH_60"
+								 height="turbo.WIDTH_60"
+								 bottom="20"
+								 backgroundColor="transparent" />
+			<!-- 
+      <label text="$.args.message"
+             textAlign="center"
+             verticalAlign="center"
+             height="fill"
+             width="fill"
+             zIndex="2000"
+             fontSize="20" 
+             fontFamily="SFProDisplay-Heavy" /> -->
+
+		</blur-view>
+
+	</window>
+</alloy>

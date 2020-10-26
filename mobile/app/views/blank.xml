@@ -1,0 +1,22 @@
+<alloy>
+
+	<script static="true" src="./base.js"></script>
+
+	<script>
+		const onOpen = e => {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+		}
+
+	</script>
+
+	<window title="Nothing To See Here" onOpen="onOpen">
+
+		<label text="This is not the screen you are looking for..."
+				 width="turbo.WIDTH_75"
+				 textAlign="center"
+				 fontSize="25"
+				 fontFamily="SFProDisplay-Light" />
+
+	</window>
+
+</alloy>

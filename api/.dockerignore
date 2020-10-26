@@ -1,0 +1,18 @@
+conf/local.js
+conf/*.local.js
+coverage
+.git
+node_modules
+.nyc_output
+conf/.env
+
+# Environment files
+!.env
+.envrc
+.env.*
+
+local-only
+
+# OS Directories and Files
+.DS_Store
+Thumbs.db

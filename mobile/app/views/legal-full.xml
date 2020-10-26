@@ -1,0 +1,52 @@
+<alloy>
+
+	<script static="true" src="./base.js"></script>
+
+	<script>
+		
+		let selected = false;
+		const agree = async e => {
+			logger.track( `📌  you are here → ${screen_name}.agree()` );
+			turbo.events.fire( "legal::agree" );
+			turbo.tracker.legal_agree();
+			Alloy.close( screen_name );
+		}
+
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+		}
+
+	</script>
+	<navigation-window id="navigationWindow">
+
+		<window id="window" title="Legal Agreement" layout="composite" onOpen="onOpen" width="fill">
+
+			<absolute backgroundColor="turbo.colors.secondary" height="25" top="0" />
+
+			<scroll-view scrollType="vertical" top="25" bottom="100" left="turbo.WIDTH_3" right="turbo.WIDTH_3">
+				<label text="$.args.legal_consent_text" width="turbo.WIDTH_90" />
+			</scroll-view>
+
+			<absolute backgroundColor="turbo.colors.secondary"
+						 height="100"
+						 bottom="0">
+
+				<label text="Agree and Continue"
+						 height="50"
+						 color="turbo.colors.primary_active"
+						 backgroundColor="turbo.colors.primary"
+						 width="turbo.WIDTH_80"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 fontSize="20"
+						 onClick="agree" />
+			</absolute>
+
+		</window>
+
+	</navigation-window>
+
+</alloy>

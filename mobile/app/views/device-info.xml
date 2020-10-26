@@ -1,0 +1,208 @@
+<alloy>
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );
+	</script>
+
+	<script>
+
+		const closeWindow = () => {
+			$.window.close();
+		}
+
+		function onOpen() {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+		}
+
+		const copy_to_clipboard = () => {
+			turbo.copyDeviceInfoToClipboard();
+			alert( 'Info copied to clipboard' );
+		}
+	</script>
+
+	<window id="window" title="Device Info" layout="composite" onBack="closeWindow" onOpen="onOpen">
+
+		<action-bar platform="android" displayHomeAsUp="true" onHomeIconItemSelected="closeWindow" />
+
+
+		<table-view id="tableview" backgroundColor="turbo.colors.primary" separatorColor="white">
+
+			<table-view-section id="general">
+
+				<header-view>
+
+					<absolute backgroundColor="turbo.colors.background" class="header-view" height="130">
+
+						<image src="/images/logos/axway-light2.png" width="100" height="100" left="15" _borderRadius="50" />
+
+						<vertical left="115" height="size">
+
+							<label text="turbo.app_display_name"
+									 color="turbo.colors.background_active"
+									 textAlign="center"
+									 fontSize="25"
+									 fontFamily="SFProDisplay-Black"
+									 top="0" />
+
+							<label text="Copy to Clipboard"
+									 color="turbo.colors.primary_active"
+									 backgroundColor="turbo.colors.primary"
+									 width="175"
+									 height="40"
+									 top="15"
+									 textAlign="center"
+									 fontSize="15"
+									 fontFamily="SFProDisplay-Bold"
+									 onClick="copy_to_clipboard" />
+
+						</vertical>
+					</absolute>
+				</header-view>
+				<table-view-row>
+					<icon name="mobile-alt" class="row-icon" />
+					<label text="turbo.app_display_name" class="row-title" />
+					<Label text="turbo.app_version" class="row-value" />
+				</table-view-row>
+				<table-view-row>
+					<icon name="tools" class="row-icon" />
+					<label text="Titanium SDK" class="row-title" />
+					<Label text="turbo.titanium_sdk_version" class="row-value" />
+				</table-view-row>
+				<table-view-row>
+					<icon name="rocket-launch" class="row-icon" />
+					<label text="Titanium Turbo" class="row-title" />
+					<Label text="turbo.version" class="row-value" />
+				</table-view-row>
+			</table-view-section>
+
+			<table-view-section>
+
+				<header-view>
+					<absolute backgroundColor="turbo.colors.background" class="header-view" height="55">
+						<label text="Device Info" color="turbo.colors.background_active" textAlign="center" fontSize="20" fontFamily="SFProDisplay-Bold" />
+					</absolute>
+				</header-view>
+
+				<table-view-row>
+					<icon name="mobile-alt" type="solid" size="25" left="15" color="turbo.colors.primary" />
+					<label text="Operating System" class="row-title" />
+					<label text="turbo.os_name_full + ' ' + turbo.os_version" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="mobile-alt" class="row-icon" />
+					<label text="Device Model" class="row-title" />
+					<label text="turbo.device_model_name" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="mobile-alt" class="row-icon" />
+					<label text="Device Manufacturer" class="row-title" />
+					<label text="turbo.device_manufacturer" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="arrows-h" class="row-icon" />
+					<label text="Screen Width" class="row-title" />
+					<label text="turbo.device_width + ' dp'" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="arrows-v" class="row-icon" />
+					<label text="Screen Height" class="row-title" />
+					<label text="turbo.device_height+ ' dp'" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="ruler-combined" class="row-icon" />
+					<label text="Screen DPI" class="row-title" />
+					<label text="turbo.device_dpi" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="ruler-combined" class="row-icon" />
+					<label text="Logical Density Factor" class="row-title" />
+					<label text="turbo.device_logical_density_factor" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="ruler-combined" class="row-icon" />
+					<label text="Device Density" class="row-title" />
+					<label text="turbo.device_density" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="sd-card" class="row-icon" />
+					<label text="Total Memory" class="row-title" />
+					<label text="turbo.device_total_memory_formatted" color="turbo.colors.primary" right="15" width="size" fontFamily="SFProDisplay-Medium" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="sd-card" class="row-icon" />
+					<label text="Available Memory" class="row-title" />
+					<label text="turbo.device_available_memory_formatted" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="microchip" class="row-icon" />
+					<label text="Processor Count" class="row-title" />
+					<label text="turbo.device_processor_count" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="wifi" class="row-icon" />
+					<label text="Network Type" class="row-title" />
+					<label text="turbo.network_type_name" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="power-off" class="row-icon" />
+					<label text="Device Booted" class="row-title" />
+					<label text="turbo.uptime_formatted" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="signal" class="row-icon" />
+					<label text="Network Online" class="row-title" />
+					<label text="turbo.online.toString()" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="id-card" class="row-icon" />
+					<label text="Device ID" class="row-title" />
+					<label text="turbo.device_id" class="row-value" fontSize="12" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="battery-bolt" class="row-icon" />
+					<label text="Battery Level" class="row-title" />
+					<label text="turbo.battery_level_formatted" class="row-value" />
+				</table-view-row>
+
+				<table-view-row>
+					<icon name="globe-americas" class="row-icon" />
+					<label text="Locale" class="row-title" />
+					<label text="turbo.locale" class="row-value" />
+				</table-view-row>
+
+
+				<!-- <FooterView>
+						<View backgroundColor="#151c20" class="header-view" />
+					</FooterView> -->
+			</table-view-section>
+
+			<table-view-section>
+				<header-view>
+					<View backgroundColor="#151c20" class="header-view" height="50" />
+				</header-view>
+				<FooterView>
+					<View backgroundColor="#151c20" class="header-view" />
+				</FooterView>
+			</table-view-section>
+
+		</table-view>
+
+	</window>
+
+</alloy>

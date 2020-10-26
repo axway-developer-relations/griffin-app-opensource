@@ -1,0 +1,5 @@
+{
+	"ignore": [
+	"2node_modules/@titanium/polyfill/whatwg-url.js" // comment out this line and the build will work
+  ]
+}

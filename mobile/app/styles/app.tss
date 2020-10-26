@@ -1,0 +1,125 @@
+
+"Picker": {
+	"backgroundColor": turbo.colors.background // fix for Android being different defaults than iOS.
+}
+
+"Label": {
+	"color": turbo.colors.text,
+	"font": {
+		"fontSize": 17,
+		"fontFamily": "SFProDisplay-Normal"
+	},
+	"includeFontPadding": false,
+	
+},
+
+"Icon": {
+	"color": turbo.colors.text,
+},
+
+"TabGroup[platform=android]": {
+	"style": Titanium.UI.Android.TABS_STYLE_BOTTOM_NAVIGATION,
+	"shiftMode": false,
+},
+
+"TabGroup": {
+	"tabsBackgroundColor": turbo.colors.primary,
+	"barColor": turbo.colors.primary,
+	"tabsTranslucent": false,
+	"activeTintColor": turbo.colors.primary_active,
+	"activeTitleColor": turbo.colors.primary_active,
+	"tintColor": turbo.colors.primary_disabled,
+	"titleColor": turbo.colors.primary_disabled,
+	"navTintColor": turbo.colors.primary_active,
+},
+
+"Tab": {
+	// "activeTitleColor": turbo.colors.primary_active,
+	// "titleColor": turbo.colors.primary_active,
+},
+
+"TextField": {
+	"height": 40,
+},
+
+"Window": {
+	"id": "window",
+	"backgroundColor": turbo.colors.background,
+	"layout": "vertical",
+	"height": Ti.UI.FILL,
+	"extendSafeArea": true,
+},
+
+"Window[platform=android]": {
+	"onAndroidback": "turbo.noop",
+	"titleColor": turbo.colors.primary_active,
+}
+
+"Window[platform=ios]": {
+	"largeTitleEnabled": true,
+	"largeTitleDisplayMode": Ti.UI.iOS.LARGE_TITLE_DISPLAY_MODE_ALWAYS,
+	"titleAttributes": { 
+		"color": turbo.colors.primary_active,
+	},
+	"onBack": "turbo.noop",
+	"barColor": turbo.colors.primary,
+},
+
+"TableViewRow": {
+	"height": 60,
+	"backgroundColor": turbo.colors.surface,
+},
+
+"RefreshControl": {
+	"tintColor": turbo.colors.primary,
+}
+
+"ScrollView": {
+	"scrollType": "vertical",
+	"height": Ti.UI.FILL,
+	"layout": "vertical"
+}
+
+"TableView": {
+	"scrollType": "vertical",
+	"height": Ti.UI.FILL,
+	"layout": "vertical",
+	"backgroundColor": turbo.colors.background,
+}
+
+
+".line1": {
+	"height": 1,
+	"width": turbo.WIDTH_90,
+	"top": 15,
+	"backgroundColor": turbo.colors.secondary,
+}
+
+"TableViewRow": {
+	"height": 55,
+	"backgroundColor": turbo.colors.surface,
+
+}
+
+".row-icon": {
+	"color": turbo.colors.primary,
+	"size": 25, 
+	"left": 15,
+	"type": "solid",
+}
+
+".row-title": {
+	"color": turbo.colors.text,
+	"font": {
+		"fontFamily": "SFProDisplay-Medium"
+	},
+	"left": 55,
+}
+
+".row-value": {
+	"color": turbo.colors.primary,
+	"font": {
+		"fontFamily": "SFProDisplay-Medium"
+	},
+	"right": 15,
+}

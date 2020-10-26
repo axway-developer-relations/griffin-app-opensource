@@ -1,0 +1,42 @@
+<alloy>
+	<script static="true" src="./base.js"></script>
+	<script>
+		if ( _.isString( $.args ) ) {
+			$.args = { message: $.args };
+		}
+		$.args.message = $.args.message || 'Loading...';
+		const onOpen = e => {
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+		}
+
+	</script>
+
+	<window id="loading3" onOpen="onOpen" layout="absolute" backgroundColor="turbo.colors.primary">
+
+		<image src="/images/logos/app.png"
+				 width="turbo.WIDTH_50"
+				 zIndex="1000" />
+
+		<animation-view id="lottie"
+							 module="@titanium/lottie"
+							 file="/animations/lottie-rocket2.json"
+							 loop="true"
+							 autoStart="true"
+							 width="turbo.WIDTH_40"
+							 height="turbo.WIDTH_40"
+							 bottom="60"
+							 backgroundColor="transparent"
+							 zIndex="2000" />
+
+		<label id="message" width="turbo.WIDTH_85" height="50" bottom="20" zIndex="2000" text="$.args.message" textAlign="center" verticalAlign="center"  fontSize="22" fontFamily="SFProDisplay-Medium" color="turbo.colors.primary_active" />
+
+	</window>
+
+
+	<script>
+		$.updateMessage = message => {
+			$.message.text = message;
+		}
+	</script>
+
+</alloy>

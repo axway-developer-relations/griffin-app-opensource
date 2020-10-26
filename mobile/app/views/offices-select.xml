@@ -1,0 +1,135 @@
+<alloy>
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );	
+	</script>
+
+	<script>
+
+		let selected = false;
+
+		async function select_office( e ) {
+
+			logger.track( '📌  you are here → offices-select.select_office()' );
+
+			if ( selected ) { return }
+
+			selected = true;
+
+			turbo.openLoadingScreen();
+			e.source.backgroundColor = turbo.colors.secondary;
+			e.source.children[ 0 ].color = turbo.colors.secondary_active;
+			e.source.children[ 1 ].color = turbo.colors.secondary_active;
+			turbo.tracker.office_select({ 
+				old_office_id: turbo.app.data.current_user.office_id,
+				new_office_id: e.source.office_id,
+			})
+			turbo.app.data.current_user.office_id = e.source.office_id;
+			await turbo.api.employees.update( turbo.app.data.current_user );
+			await turbo.api.reports.query();
+
+			const capacities = await turbo.api.capacities.getByProperty( 'office_id', turbo.app.data.current_office.id );
+			logger.debug( `🦠  all capacities: ${JSON.stringify( capacities, null, 2 )}` );
+			turbo.app.data.active_capacities = _.sortBy(_.filter( capacities, capacity => !capacity.end_day || capacity.end_day >= _.toInteger( moment().format( 'YYYYDDDD' ) ) ), 'start_day');
+
+			turbo.closeLoadingScreen();
+			// return turbo.closeTabWindow( $.window );
+			// $.window.close();
+			return Alloy.close( 'offices-select' );
+
+		}
+
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+		}
+
+	</script>
+
+	<window id="window" title="Select Office" onOpen="onOpen">
+
+		<scroll-view top="20" debugColor="blue" backgroundColor="turbo.colors.background">
+
+			<label width="turbo.WIDTH_80"
+					 top="0"
+					 text="Please select your office location. If you normally work remote, just select the closest office location to you." />
+
+			<absolute width="fill" top="15" height="50" debugColor="orange">
+
+				<label text="Office Name"
+						 width="size"
+						 left="20"
+						 textAlign="left"
+						 fontSize="20"
+						 fontFamily="SFProDisplay-Black"
+						 height="fill"
+						 touchEnabled="false" />
+
+				<label text="Max Capacity"
+						 width="size"
+						 right="20"
+						 textAlign="left"
+						 fontSize="20"
+						 fontFamily="SFProDisplay-Black"
+						 height="fill"
+						 touchEnabled="false" />
+
+			</absolute>
+
+			<vertical height="size"
+						 dataCollection="offices"
+						 backgroundColor="turbo.colors.surface"
+						 debugColor="red"
+						 top="0"
+						 left="15"
+						 right="15">
+
+				<absolute width="fill"
+							 top="0"
+							 height="50"
+							 touchEnabled="true"
+							 onClick="select_office"
+							 debugColor="yellow"
+							 office_id="{id}">
+
+					<label text="{name}"
+							 width="size"
+							 top="15"
+							 left="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Bold"
+							 height="20"
+							 touchEnabled="false" />
+
+					<label text="{max_capacity}"
+							 width="size"
+							 top="15"
+							 right="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Bold"
+							 height="20"
+							 touchEnabled="false" />
+
+				</absolute>
+
+				<absolute class="line1" top="0" />
+
+			</vertical>
+
+			<absolute id="bottom-spacer" height="turbo.HEIGHT_40" debugColor="green" />
+
+		</scroll-view>
+
+	</window>
+
+	<script>
+		Alloy.Collections.offices.trigger( 'fetch' );
+		Alloy.Collections.offices.sort();
+		logger.debug( `🦠  Alloy.Collections.offices.length: ${JSON.stringify( Alloy.Collections.offices.length, null, 2 )}` );
+	</script>
+
+</alloy>

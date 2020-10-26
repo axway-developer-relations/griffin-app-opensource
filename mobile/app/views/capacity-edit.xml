@@ -1,0 +1,340 @@
+<alloy>
+
+	<script static="true" src="./base.js">
+		const moment = require( 'moment' );
+		const { observe, unobserve, raw } = require( '@titanium/observer' );	
+	</script>
+
+	<script>
+		const update_start_date = async e => {
+			$.start_date.text = moment( e.source.value ).format( 'MMM D, YYYY' );
+			turbo.app.data.selected_capacity.start_day = _.toInteger( moment( e.source.value ).format( 'YYYYDDDD' ) );
+
+			if ( turbo.app.data.selected_capacity.end_day && moment( turbo.app.data.selected_capacity.end_day, 'YYYYDDDD' ).isBefore( moment( turbo.app.data.selected_capacity.start_day, 'YYYYDDDD' ) ) ) {
+				$.end_date.text = $.start_date.text;
+				turbo.app.data.selected_capacity.end_day = turbo.app.data.selected_capacity.start_day;
+			}
+
+		}
+
+		const update_end_date = async e => {
+			$.end_date.text = moment( e.source.value ).format( 'MMM D, YYYY' );
+			turbo.app.data.selected_capacity.end_day = _.toInteger( moment( e.source.value ).format( 'YYYYDDDD' ) );
+		}
+
+		const update_capacity_limit = async e => {
+			const capacity_percent = Math.round( e.value );
+			$.capacity_limit_percent.text = capacity_percent + '%';
+			turbo.app.data.selected_capacity.maximum = Math.round( capacity_percent / 100 * ( turbo.app.data.current_office.max_capacity || 0 ) );
+			$.capacity_limit.text = turbo.app.data.selected_capacity.maximum;
+		}
+
+		const toggle_end_date = async e => {
+			if ( e.source.value ) {
+				$.picker_end_date.visible = false;
+				$.picker_end_date.height = 0;
+				$.end_date.text = '(open ended)';
+				turbo.app.data.selected_capacity.end_day = undefined;
+			} else {
+				$.picker_end_date.visible = true;
+				$.picker_end_date.height = 120;
+				const test = moment( turbo.app.data.selected_capacity.start_day, 'YYYYDDDD' ).isBefore( moment(), 'day' );
+				if ( moment( turbo.app.data.selected_capacity.start_day, 'YYYYDDDD' ).isBefore( moment(), 'day' ) ) {
+					turbo.app.data.selected_capacity.end_day = _.toInteger( moment().format( 'YYYYDDDD' ) );
+				} else {
+					turbo.app.data.selected_capacity.end_day = turbo.app.data.selected_capacity.start_day;
+				}
+
+				logger.debug( `🦠  turbo.app.data.selected_capacity.end_day: ${JSON.stringify( turbo.app.data.selected_capacity.end_day, null, 2 )}` );
+				$.end_date.text = moment( turbo.app.data.selected_capacity.end_day, 'YYYYDDDD' ).format( 'MMM D, YYYY' );
+				logger.debug( `🦠  $.end_date.text: ${JSON.stringify( $.end_date.text, null, 2 )}` );
+			}
+		}
+
+		const toggle_end_date_picker = async () => {
+			$.picker_end_date.height = $.picker_end_date.height ? 0 : 120;
+			$.picker_end_date.visible = $.picker_end_date.visible ? false : true;
+		}
+
+		const toggle_start_date_picker = async () => {
+			$.picker_start_date.height = $.picker_start_date.height ? 0 : 120;
+			$.picker_start_date.visible = $.picker_start_date.visible ? false : true;
+		}
+
+		const saveCapacity = async () => {
+			logger.track( '📌  You are here → capacity-edit.saveCapacity()' );
+
+			if ( !turbo.app.data.current_office || !turbo.app.data.current_user ) {
+				return;
+			}
+
+			turbo.openLoadingScreen();
+
+			await turbo.api.capacities.upsert( turbo.app.data.selected_capacity )
+				.catch( error => {
+					console.error( error );
+					logger.error( error );
+				} );
+
+			const capacities = await turbo.api.capacities.getByProperty( 'office_id', turbo.app.data.current_office.id );
+			logger.debug( `🦠  all capacities: ${JSON.stringify( capacities, null, 2 )}` );
+			turbo.app.data.active_capacities = _.sortBy( _.filter( capacities, capacity => !capacity.end_day || capacity.end_day >= _.toInteger( moment().format( 'YYYYDDDD' ) ) ), 'start_day' );
+
+			Alloy.Collections.active_capacities.reset( turbo.app.data.active_capacities );
+			logger.debug( `🦠  turbo.app.data.active_capacities: ${JSON.stringify( turbo.app.data.active_capacities, null, 2 )}` );
+
+			turbo.api.reports.query();
+
+			turbo.closeLoadingScreen();
+			return goBack();
+		}
+
+		const goBack = async () => {
+			$.window.close();
+		}
+
+		let observer;
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+
+			$.picker_start_date.value = moment( turbo.app.data.selected_capacity.start_day, 'YYYYDDDD' ).toDate();
+			$.picker_start_date.minDate = moment().toDate();
+			$.picker_start_date.maxDate = moment().add( 6, 'M' ).toDate();
+
+			$.picker_end_date.value = turbo.app.data.selected_capacity.end_day ? moment( turbo.app.data.selected_capacity.end_day, 'YYYYDDDD' ).toDate() : moment( turbo.app.data.selected_capacity.start_day, 'YYYYDDDD' ).toDate();
+			$.picker_end_date.minDate = moment().toDate();
+			$.picker_end_date.maxDate = moment().add( 6, 'M' ).toDate();
+
+			$.start_date.text = moment( turbo.app.data.selected_capacity.start_day, 'YYYYDDDD' ).format( 'MMM D, YYYY' );
+			$.end_date.text = turbo.app.data.selected_capacity.end_day ? moment( turbo.app.data.selected_capacity.end_day, 'YYYYDDDD' ).format( 'MMM D, YYYY' ) : '';
+
+			$.switch_end_date.value = !turbo.app.data.selected_capacity.end_day;
+
+			logger.debug( `🦠  turbo.app.data.selected_capacity.maximum: ${JSON.stringify( turbo.app.data.selected_capacity.maximum, null, 2 )}` );
+
+			const initial_capacity_percent = turbo.app.data.current_office.max_capacity ? Math.round( ( turbo.app.data.selected_capacity.maximum || 0 ) / turbo.app.data.current_office.max_capacity * 100 ) : 0;
+			$.capacity_limit_percent.text = initial_capacity_percent + '%';
+			$.slider_capacity_percent.value = initial_capacity_percent;
+			$.capacity_limit.text = turbo.app.data.selected_capacity.maximum || 0;
+
+			$.picker_start_date.height = 0;
+			$.picker_start_date.visible = false;
+			$.picker_end_date.height = 0;
+			$.picker_end_date.visible = false;
+
+			$.on( 'close', () => {
+				logger.track( '📌  you are here → capacity-edit.onClose()' );
+			} );
+
+
+		}
+
+
+		const closeWindow = async e => {
+			$.window.close();
+		}
+
+	</script>
+
+	<window id="window" title="Edit Capacity" layout="absolute" onOpen="onOpen" onBack="closeWindow">
+
+		<action-bar platform="android" displayHomeAsUp="true" onHomeIconItemSelected="closeWindow" />
+
+		<scroll-view contentHeight="turbo.HEIGHT_100" zIndex="100" top="0">
+
+			<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20" height="110">
+
+				<absolute top="20">
+
+					<label text="Office:"
+							 left="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Heavy"
+							 height="size" />
+
+
+					<label text="turbo.app.data.current_office.name"
+							 right="20"
+							 textAlign="right"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Medium"
+							 height="size" />
+
+				</absolute>
+
+				<absolute top="20">
+
+					<label text="Max Capacity:"
+							 left="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Bold"
+							 height="size" />
+
+
+					<label text="turbo.app.data.current_office.max_capacity"
+							 right="20"
+							 textAlign="right"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Medium"
+							 height="size" />
+
+				</absolute>
+
+			</vertical>
+
+			<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20" height="120">
+
+				<absolute top="20">
+
+					<label text="Capacity Limit:"
+							 left="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Heavy"
+							 height="size" />
+
+
+					<label id="capacity_limit"
+							 right="20"
+							 textAlign="right"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Medium"
+							 height="size" />
+
+				</absolute>
+
+				<absolute top="20">
+
+					<slider id="slider_capacity_percent" left="15" right="85" min="0" max="100" width="fill" value="50" onChange="update_capacity_limit" tintColor="turbo.colors.primary" trackTintColor="turbo.colors.secondary" />
+
+					<label id="capacity_limit_percent"
+							 right="20"
+							 textAlign="right"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Medium"
+							 height="size" />
+
+				</absolute>
+
+
+			</vertical>
+
+			<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20">
+
+				<absolute top="20" onClick="toggle_start_date_picker">
+
+					<label text="Start Date:"
+							 left="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Heavy"
+							 height="size"
+							 touchEnabled="false" />
+
+
+					<label id="start_date"
+							 right="55"
+							 textAlign="right"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Medium"
+							 height="size"
+							 touchEnabled="false" />
+
+					<icon name="calendar-edit" size="22" right="20" color="turbo.colors.primary" touchEnabled="false" />
+
+				</absolute>
+
+				<view class="line1" />
+
+				<picker id="picker_start_date"
+						  type="Ti.UI.PICKER_TYPE_DATE"
+						  backgroundColor="turbo.colors.surface"
+						  width="fill"
+						  height="120"
+						  onChange="update_start_date"
+						  top="0"
+						  visible="true" />
+
+
+			</vertical>
+
+			<vertical width="turbo.WIDTH_95" backgroundColor="turbo.colors.surface" top="20">
+
+				<absolute top="20" onClick="toggle_end_date_picker">
+
+					<label text="End Date:"
+							 left="20"
+							 textAlign="left"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Heavy"
+							 height="size"
+							 touchEnabled="false" />
+
+
+					<label id="end_date"
+							 right="55"
+							 textAlign="right"
+							 fontSize="20"
+							 fontFamily="SFProDisplay-Medium"
+							 height="true"
+							 touchEnabled="false" />
+
+					<icon name="calendar-edit" size="22" right="20" color="turbo.colors.primary" touchEnabled="false" />
+
+				</absolute>
+
+				<horizontal right="20" width="size" top="15">
+					<label text="No End Date" fontSize="20" fontFamily="SFProDisplay-Medium" />
+					<switch id="switch_end_date" onChange="toggle_end_date" left="20" />
+				</horizontal>
+
+				<view class="line1" />
+
+				<picker id="picker_end_date"
+						  type="Ti.UI.PICKER_TYPE_DATE"
+						  backgroundColor="turbo.colors.surface"
+						  width="fill"
+						  height="120"
+						  onChange="update_end_date"
+						  visible="true" />
+
+
+			</vertical>
+
+
+
+			<horizontal top="25">
+
+				<label text="Cancel"
+						 backgroundColor="turbo.colors.primary_active"
+						 color="turbo.colors.primary"
+						 borderColor="turbo.colors.primary"
+						 borderWidth="3"
+						 width="turbo.WIDTH_42"
+						 height="45"
+						 left="turbo.WIDTH_4"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="goBack" />
+
+				<label text="Save Capacity"
+						 color="turbo.colors.primary_active"
+						 backgroundColor="turbo.colors.primary"
+						 width="turbo.WIDTH_42"
+						 height="45"
+						 left="turbo.WIDTH_4"
+						 textAlign="center"
+						 fontFamily="SFProDisplay-Bold"
+						 onClick="saveCapacity" />
+
+			</horizontal>
+
+
+		</scroll-view>
+
+	</window>
+
+</alloy>

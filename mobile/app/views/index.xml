@@ -1,0 +1,5 @@
+<alloy>
+   <window backgroundColor="turbo.colors.primary" layout="composite">
+      <image src="/images/logos/app.png" width="turbo.WIDTH_50" />
+   </window>
+</alloy>

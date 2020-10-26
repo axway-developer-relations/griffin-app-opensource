@@ -1,0 +1,138 @@
+<alloy>
+
+
+	<script static="true" src="./base.js"></script>
+
+	<script>
+
+		let selected = false;
+		const agree = async e => {
+			// logger.track( `📌  you are here → ${screen_name}.agree()` );
+			// turbo.tracker.legal_agree();
+			// Alloy.close( screen_name );
+		}
+
+		const onOpen = e => {
+
+			logger.track( `📖  you are here → ${screen_name}.onOpen()` );
+			turbo.tracker.screen_view( screen_name );
+
+		}
+
+
+		$.args.notice.responses = $.args.notice.responses || [];
+
+		// logger.debug(`🦠  $.args: ${JSON.stringify($.args, null, 2)}`);
+
+
+		logger.debug( `🦠  $.args.notice.content.length: ${JSON.stringify( $.args.notice.content.length, null, 2 )}` );
+
+		$.args.content_long_text = $.args.notice.type === 'text' && ($.args.content_long_text || _.lte( $.args.notice.content.length, 130 ));
+		$.args.content_short_text = $.args.notice.type === 'text' && !$.args.content_long_text;
+		$.args.content_url = $.args.notice.type === 'url';
+
+		// logger.debug( `🦠  $.args: ${JSON.stringify( $.args, null, 2 )}` );
+
+		const onClick = async e => {
+			// alert( e );
+			logger.debug(`🦠  e.source.text: ${JSON.stringify(e.source.text, null, 2)}`);
+
+			await turbo.openLoadingScreen();
+			turbo.events.fire('notice::submit',  _.defaults({}, $.args.notice, { entries: [ e.source.text ]}) );
+			// await Alloy.close( screen_name );
+		}
+
+
+	</script>
+
+	<style>
+		{
+			".response_button": {
+
+				"height": 50,
+				"color": turbo.colors.primary_active,
+				"backgroundColor": turbo.colors.primary,
+				"width":turbo.WIDTH_80,
+				"textAlign": "center",
+				"font": {
+					"fontFamily": "SFProDisplay-Bold",
+						"fontSize": 20
+				}
+
+				,
+				"top": 20,
+			}
+		}
+	</style>
+	<navigation-window id="navigationWindow">
+
+		<window id="window" title="$.args.notice.title" layout="composite" onOpen="onOpen" width="fill">
+
+			<absolute backgroundColor="turbo.colors.secondary" height="25" top="0" />
+
+
+			<scroll-view id="scroll_view" scrollType="vertical" top="25" bottom="$.args.notice.responses.length * 70 + 40" left="turbo.WIDTH_3" right="turbo.WIDTH_3">
+
+				<absolute height="fill" if="$.args.content_long_text">
+					<label text="$.args.notice.content"
+							 width="turbo.WIDTH_90"
+							 textAlign="center"
+							 fontFamily="SFProDisplay-Bold"
+							 fontSize="27" />
+				</absolute>
+
+				<label if="$.args.content_short_text"
+						 text="$.args.notice.content"
+						 width="turbo.WIDTH_90"
+						 textAlign="left"
+						 fontFamily="SFProDisplay-Normal"
+						 fontSize="17"
+						 top="10" />
+
+				<absolute height="size" if="$.args.content_url" >
+					<web-view url="$.args.notice.content" width="fill"
+							_width="turbo.WIDTH_90" height=fill" />
+				</absolute>
+
+			</scroll-view>
+
+			<vertical backgroundColor="turbo.colors.secondary"
+						 height="$.args.notice.responses.length * 70 + 40"
+						 bottom="0">
+
+				<absolute height="10" />
+
+				<label if="$.args.notice.responses[0]"
+						 text="$.args.notice.responses[0]"
+						 class="response_button"
+						 onClick="onClick" />
+
+				<label if="$.args.notice.responses[1]"
+						 text="$.args.notice.responses[1]"
+						 class="response_button"
+						 onClick="onClick" />
+
+				<label if="$.args.notice.responses[2]"
+						 text="$.args.notice.responses[2]"
+						 class="response_button"
+						 onClick="onClick" />
+
+				<label if="$.args.notice.responses[3]"
+						 text="$.args.notice.responses[3]"
+						 class="response_button"
+						 onClick="onClick" />
+
+				<label if="$.args.notice.responses[4]"
+						 text="$.args.notice.responses[4]"
+						 class="response_button"
+						 onClick="onClick" />
+
+				<absolute height="30" />
+
+			</vertical>
+
+		</window>
+
+	</navigation-window>
+
+</alloy>
