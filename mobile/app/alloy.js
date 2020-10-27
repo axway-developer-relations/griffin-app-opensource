@@ -146,7 +146,7 @@
 
 	try {
 		Alloy.Globals.aca = require(`com.appcelerator.aca`);
-	 } catch (error) {
+	} catch (error) {
 
 		logger.error(`Error loading module com.appcelerator.aca`, error);
 		Alloy.Globals.aca = {
@@ -158,7 +158,7 @@
 			getOptOutStatus:     () => { return false; },
 			setBreadcrumbLimit:  (breadcrumbLimit = 100) => { console.debug(`aca.setBreadcrumbLimit(${breadcrumbLimit})`); },
 		};
-	 }
+	}
 
 
 	// #endregion ---[ Configure ACA Adapter ]---
