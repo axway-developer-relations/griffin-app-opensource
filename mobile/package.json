@@ -95,7 +95,7 @@
 		"@titanium/observer": "^0.0.3",
 		"@titanium/permissions": "^1.0.2",
 		"@titanium/please": "^1.0.10",
-		"@titanium/polyfill": "^0.0.15",
+		"@titanium/polyfill": "^1.0.1",
 		"@titanium/screenshot": "^1.0.1",
 		"@titanium/updater": "^1.0.1",
 		"@titanium/webdialog": "^2.1.3",
