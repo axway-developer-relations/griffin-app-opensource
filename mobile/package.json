@@ -89,7 +89,7 @@
 		"@titanium/calendar-picker": "^0.0.11",
 		"@titanium/deeply": "^1.0.4",
 		"@titanium/errors": ">=0.0.2",
-		"@titanium/essentials": "^1.0.21",
+		"@titanium/essentials": "^1.0.22",
 		"@titanium/identity": "^1.1.2",
 		"@titanium/lottie": "^1.0.24",
 		"@titanium/observer": "^0.0.3",
