@@ -106,7 +106,7 @@
 		"@geek/spawn": "^0.0.3",
 		"@titanium/eslint-config": "^0.0.18",
 		"@titanium/plugin-turbo": "^1.0.6",
-		"@titanium/turbo": "^2.0.15",
+		"@titanium/turbo": "^2.1.5",
 		"babel-plugin-search-and-replace": "^1.1.0",
 		"babel-plugin-transform-remove-console": "^6.9.4",
 		"bluebird": "^3.7.2",
