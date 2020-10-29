@@ -85,7 +85,7 @@
 		"@mobile/tinycolor2": "^1.4.1-2",
 		"@titanium/authentication": "^1.0.1",
 		"@titanium/authentication-oauth": "^1.0.13",
-		"@titanium/bluebird": "^3.7.2-1",
+		"@titanium/bluebird": "^3.7.3",
 		"@titanium/calendar-picker": "^0.0.11",
 		"@titanium/deeply": "^1.0.4",
 		"@titanium/errors": ">=0.0.2",
