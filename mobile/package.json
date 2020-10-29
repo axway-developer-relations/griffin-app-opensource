@@ -86,7 +86,7 @@
 		"@titanium/authentication": "^1.0.1",
 		"@titanium/authentication-oauth": "^1.0.13",
 		"@titanium/bluebird": "^3.7.2-1",
-		"@titanium/calendar-picker": "^0.0.11",
+		"@titanium/calendar-picker": "^1.0.0",
 		"@titanium/deeply": "^1.0.4",
 		"@titanium/errors": ">=0.0.2",
 		"@titanium/essentials": "^1.0.21",
