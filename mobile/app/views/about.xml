@@ -128,7 +128,7 @@
 
 		// //TIBUG: Can't databind to TableViewSection - https://jira.appcelerator.org/browse/TIMOB-24725
 
-		for( const dependency of Alloy.dependency_registry ){
+		for( const dependency of _.filter(Alloy.package_registry, pkg => !_.isNil(pkg.name) ) ){
 
 			const icon = turbo.createIcon({ class: 'row-icon', name:'mobile-alt'});
 			const name = turbo.createLabel({ text: dependency.name, class: 'row-title' });

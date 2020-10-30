@@ -1,0 +1,6 @@
+{
+	"ignore": [
+	"**/node_modules/@titanium/polyfill/whatwg-url.js",
+	"**/node_modules/@titanium/polyfill/URL.js"
+  ]
+}

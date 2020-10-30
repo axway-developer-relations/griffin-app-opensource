@@ -1,12 +1,19 @@
 # The Griffin App
 
-> The Axway Griffin App goes open source!
+> The Axway Griffin App goes open-source!
+
+![GitHub stars](https://img.shields.io/github/stars/axway-developer-relations/griffin-app-opensource?style=social)
+![GitHub forks](https://img.shields.io/github/forks/axway-developer-relations/griffin-app-opensource?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/axway-developer-relations/griffin-app-opensource?style=social)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=axway-developer-relations/griffin-app-opensource)](https://dependabot.com)
 
 -----
 
 * [What is it?](#what-is-it)
 * [Features](#features)
 * [How do I get started?](#how-do-i-get-started)
+	* [Get started with `Mobile App`](#get-started-with-mobile-app)
+	* [Get started with `API`](#get-started-with-api)
 * [Questions or feedback?](#questions-or-feedback)
 
 -----
@@ -23,22 +30,27 @@
 
 ## What is it?
 
-The Griffin App is a free, open source mobile application developed by [Axway](https://www.axway.com) to help you and your team transition back into the workplace in a safe and compliant way.
+The Griffin App is a free, open-source mobile application and API developed by [Axway](https://www.axway.com) to help you and your team transition back into the workplace in a safe and compliant way.
 
 ## Features
 
-- 📅 Built-in calendar for easily scheduling and coordinating in-office hours among teams
-- 🔍 "Weekly view" of upcoming office capacity levels
-- 🏙 Support for multiple office locations, each with different office hour policies and capacity limits
-- 📈 Analytics dashboard for HR or other privileged users to view office traffic trends and set policies/limits for each office location
-- 🎨 Easy customization for your logos, colors, and branding
-- 🔒 App and APIs secured by OAuth SSO
-- 🚀 Native iOS and Android support all-in-one (thanks to the wonderful team behind [Axway Titanium](https://github.com/appcelerator/titanium_mobile))
+- 📅  &nbsp; Built-in calendar for easily scheduling and coordinating in-office hours among teams
+- 🔍  &nbsp; "Weekly view" of upcoming office capacity levels
+- 🏙  &nbsp; Support for multiple office locations, each with different office hour policies and capacity limits
+- 📈  &nbsp; Analytics dashboard for HR or other privileged users to view office traffic trends and set policies/limits for each office location
+- 🎨  &nbsp; Easy customization for your logos, colors, and branding
+- 🔒  &nbsp; App and APIs secured by OAuth SSO
+- 🚀  &nbsp; Native iOS and Android support all-in-one (thanks to the wonderful team behind [Axway Titanium](https://github.com/appcelerator/titanium_mobile))
 
 ## How do I get started?
 
-- [You can find the instructions for getting the `Mobile App` here.](./mobile/readme.md)
-- [The `API` instructions for configuration and deployment are here.](./api/readme.md)
+### Get started with `Mobile App`
+
+> [You can find the instructions for getting the `Mobile App` here.](./mobile/readme.md)
+
+### Get started with `API`
+
+> [The `API` instructions for configuration and deployment are here.](./api/readme.md)
 
 ## Questions or feedback?
 

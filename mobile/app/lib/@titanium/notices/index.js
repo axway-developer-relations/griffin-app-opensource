@@ -19,7 +19,7 @@ turbo.app.device_notices_completed = Ti.App.Properties.getList(`turbo.app.device
 
 
 observe(() => {
-	logger.track(`👀  Saving turbo.app.device_notices_completed: ${turbo.app.device_notices_completed}`);
+	logger.track(`👀  Saving turbo.app.device_notices_completed: ${turbo.app.device_notices_completed.length}`);
 	Ti.App.Properties.setList(`turbo.app.device_notices_completed`, raw(turbo.app).device_notices_completed);
 });
 
