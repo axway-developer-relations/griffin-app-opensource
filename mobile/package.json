@@ -110,7 +110,7 @@
 		"cpy": "^8.1.1",
 		"dargs": "^7.0.0",
 		"del": "^6.0.0",
-		"eslint": "^7.12.1",
+		"eslint": "^7.16.0",
 		"eslint-plugin-import": "^2.22.1",
 		"eslint-plugin-jsdoc": "^30.7.3",
 		"eslint-plugin-promise": "^4.2.1",
