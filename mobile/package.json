@@ -92,7 +92,7 @@
 		"@titanium/identity": "^1.1.2",
 		"@titanium/lottie": "^1.0.24",
 		"@titanium/observer": "^0.0.3",
-		"@titanium/permissions": "^1.0.2",
+		"@titanium/permissions": "^1.0.3",
 		"@titanium/please": "^1.0.11",
 		"@titanium/screenshot": "^1.0.1",
 		"@titanium/turbo": "^2.1.6",
