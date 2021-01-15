@@ -95,7 +95,7 @@
 		"@titanium/permissions": "^1.0.2",
 		"@titanium/please": "^1.0.11",
 		"@titanium/screenshot": "^1.0.1",
-		"@titanium/turbo": "^2.1.6",
+		"@titanium/turbo": "^2.1.7",
 		"@titanium/updater": "^1.0.1",
 		"@titanium/webdialog": "^2.1.3"
 	},
